@@ -1,0 +1,5 @@
+{
+"breadcrumb_length_limit": 100,
+"total_breadcrumbs_length_limit": 200,
+"breadcrumbs_separator": " ■ "
+}
