@@ -15,17 +15,17 @@ foo(){
 }
 ```
 and the carret is currently in the line with `zoo`, then the breadbrumbs would be:
-```
-foo(){ ■ bar:  ■ } else { ■ blah-> ■
-```
+`foo(){`, `bar:`, `} else {`, and `blah->`.
 
 This approach is quite language agnostic, and I find it mostly usefull for code which spans many lines in which tracking indentation and context is difficult to me (for example in .sass files).
 
 
 ## Settings
 
-You can edit Breadcrumbs.sublime-settings to specify following values:
-|| name || default value || meaning ||
-|"breadcrumb_length_limit" | 100 | Trim each line to this many characters to form a breadcrumb |
-| "total_breadcrumbs_length_limit" | 200 | Make sure that the total length of the status is no longer than this many characters, by trimming the longest breadcrumbs first |
-| "breadcrumbs_separator" | " ■ " | Separate breadcrumbs using this character |
+You can edit Breadcrumbs.sublime-settings to specify the following values:
+
+| name | type | default value | meaning |
+|------|------|---------|---------|
+|"breadcrumb_length_limit" | Number | 100 | Trim each line to this many characters to form a breadcrumb |
+| "total_breadcrumbs_length_limit" | Number | 200 | Make sure that the total length of the status is no longer than this many characters, by trimming the longest breadcrumbs first |
+| "breadcrumbs_separator" | String | " ■ " | Separate breadcrumbs using this character |
