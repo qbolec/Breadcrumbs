@@ -2,18 +2,26 @@
 import sublime, sublime_plugin
 import math
 
+try:
+  xrange
+except NameError:
+  xrange = range
+
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
 
 def get_line_by_row(view, row):
   return view.line(view.text_point(row,0))
 
+def points_of_line(line):
+  return xrange(line.begin(), line.end())
+
 def get_row_indentation(view, row):
   tab_size = get_tab_size(view)
   pos = 0
   ln = get_line_by_row(view,row)
 
-  for pt in xrange(ln.begin(), ln.end()):
+  for pt in points_of_line(ln):
     ch = view.substr(pt)
 
     if ch == '\t':
@@ -29,10 +37,10 @@ def get_row_indentation(view, row):
 
 def is_white_row(view, row):
   line = get_line_by_row(view,row)
-  return all(view.substr(pt).isspace() for pt in xrange(line.begin(), line.end()))
+  return all(view.substr(pt).isspace() for pt in points_of_line(line))
 
 def get_breadcrumb(view, line, limit):
-  for pt in xrange(line.begin(), line.end()):
+  for pt in points_of_line(line):
     ch = view.substr(pt)
     if not ch.isspace():
       return view.substr(sublime.Region(pt,min(line.b,pt + limit))).strip()
@@ -53,14 +61,18 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
         if current_row is None:
           return
 
-        while 0 <= current_row and is_white_row(view, current_row):
+        if is_white_row(view, current_row):
+          while 0 <= current_row and is_white_row(view, current_row):
+            current_row -= 1
+
+          if current_row < 0:
+            return
+
+          indentation = get_row_indentation(view, current_row) + 1          
+        else:
+          indentation = get_row_indentation(view, current_row)
           current_row -= 1
 
-        if current_row < 0:
-          return
-
-        indentation = get_row_indentation(view, current_row)
-        current_row -= 1
         breadcrumb_lines = []
         while 0<=current_row and 0<indentation:
           if not is_white_row(view, current_row):
@@ -78,23 +90,28 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
         ]
 
         lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
-        needed_chars = sum(lengths) + (len(lengths)) * len(separator)
-        overflow = needed_chars - total_breadcrumbs_length_limit
-        while 0 < overflow:
-          max_length = max(lengths)
-          equal = len([0 for length in lengths if length == max_length ])
-          next_length = max([0]+[length for length in lengths if length < max_length ])
-          if overflow <= equal:
-            cut = 1
-          else:
-            cut = min(max_length - next_length, overflow // equal )
+        sorted_lengths = sorted(lengths)
+        previous_length = 0
+        number_of_characters_left  = total_breadcrumbs_length_limit - len(lengths) * len(separator)
+        for (number_of_shorter, current_length) in enumerate(sorted_lengths):
+          if previous_length < current_length:
+            previous_length = current_length
+            number_of_not_shorter = len(breadcrumbs) - number_of_shorter
+            if number_of_characters_left < current_length * number_of_not_shorter:
+              length_of_short_trim = number_of_characters_left // number_of_not_shorter
+              length_of_long_trim = length_of_short_trim + 1
+              number_of_long_trimmed = number_of_characters_left % number_of_not_shorter
+              number_of_short_trimmed = number_of_not_shorter - number_of_long_trimmed
+              for (index_of_breadcrumb, breadcrum_length) in enumerate(lengths):
+                if current_length <= breadcrum_length:
+                  if 0 < number_of_short_trimmed:
+                    length_of_trim = length_of_short_trim
+                    number_of_short_trimmed -= 1
+                  else:
+                    length_of_trim = length_of_long_trim
+                  breadcrumbs[index_of_breadcrumb] = breadcrumbs[index_of_breadcrumb][0:length_of_trim]
+              break
+          number_of_characters_left -= current_length
 
-          for (i, length) in enumerate(lengths):
-            if length == max_length:
-              lengths[i] -= cut
-              overflow -= cut
-              breadcrumbs[i] = breadcrumbs[i][:-cut]
-              if overflow <= 0:
-                break
         view.set_status('breadcrumbs',separator.join(breadcrumbs+['']))
 
