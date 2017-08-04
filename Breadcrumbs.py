@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sublime, sublime_plugin
 import math
+import re
 
 try:
   xrange
@@ -32,20 +33,25 @@ def get_row_indentation(points, view, tab_size, limit=1e20):
 def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
-def get_breadcrumb(view, points, limit):
+def get_breadcrumb(view, points, regex, separator):
   for pt in points:
     ch = view.substr(pt)
     if not ch.isspace():
-      return view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).strip()
+      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + 500))).strip()
+      match = re.search(re.compile(regex), linestring)
+      if match:
+        return(separator + match.group('name'))
   return ''
 
 class BreadcrumbsCommand(sublime_plugin.EventListener):
   def on_selection_modified_async(self, view):
     tab_size = get_tab_size(view)
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+    my_regex = settings.get('breadcrumbs_regex', u'(?P<name>.*)')
     breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
     separator = settings.get('breadcrumbs_separator', u' › ')
     total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
+
     view.erase_status('breadcrumbs')
 
     if len(view.sel()) == 0:
@@ -80,7 +86,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
       current_indentation = get_row_indentation(points, view, tab_size, indentation)
       if current_indentation < indentation and not is_white_row(view, points):
         indentation = current_indentation
-        breadcrumbs.append(get_breadcrumb(view, points, breadcrumb_length_limit))
+        breadcrumbs.append(get_breadcrumb(view, points, my_regex, separator))
 
       current_row -= 1
 
@@ -108,4 +114,4 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
               breadcrumbs[index_of_breadcrumb] = breadcrumbs[index_of_breadcrumb][0:length_of_trim]
           break
       number_of_characters_left -= current_length
-    view.set_status('breadcrumbs',separator.join(breadcrumbs+['']))
+    view.set_status('breadcrumbs',''.join(breadcrumbs+['']))
