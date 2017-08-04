@@ -40,7 +40,7 @@ def get_breadcrumb(view, points, limit):
   return ''
 
 class BreadcrumbsCommand(sublime_plugin.EventListener):
-  def on_selection_modified(self, view):
+  def on_selection_modified_async(self, view):
     tab_size = get_tab_size(view)
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
