@@ -44,7 +44,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     tab_size = get_tab_size(view)
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
-    separator = settings.get('breadcrumbs_separator', u' ■ ')
+    separator = settings.get('breadcrumbs_separator', u' › ')
     total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
     view.erase_status('breadcrumbs')
 
