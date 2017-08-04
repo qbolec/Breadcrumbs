@@ -184,22 +184,23 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
 class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
   def __init__(self, view):
-      self.view = view
-      self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
+    self.view = view
+    self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
 
   def on_phantom_close(self, href):
-     self.view.erase_phantoms('breadcrumbs')
+    self.view.erase_phantoms('breadcrumbs')
 
   def run(self, edit):
-      phantoms = []
-      self.view.erase_phantoms('breadcrumbs')
+    phantoms = []
+    self.view.erase_phantoms('breadcrumbs')
 
-      for region in self.view.sel():
-          line = self.view.line(region)
-          (row, col) = self.view.rowcol(region.begin())
-          body = template.format(breadcrumbs=html.escape(make_breadcrumbs(self.view), quote=False), stylesheet=stylesheet)
-          phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
-          phantoms.append(phantom)
-      self.phantom_set.update(phantoms)
+    for region in self.view.sel():
+      line = self.view.line(region)
+      (row, col) = self.view.rowcol(region.begin())
+      body = template.format(breadcrumbs=html.escape(make_breadcrumbs(self.view), quote=False), stylesheet=stylesheet)
+      phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
+      phantoms.append(phantom)
+    self.phantom_set.update(phantoms)
+
   def is_visible(self):
     return int(sublime.version()) > 3124
