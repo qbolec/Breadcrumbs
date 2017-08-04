@@ -180,6 +180,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     else:
       view.erase_status('breadcrumbs')
 
+
 class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
   def __init__(self, view):
