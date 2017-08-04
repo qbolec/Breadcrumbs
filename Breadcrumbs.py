@@ -201,3 +201,5 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
           phantoms.append(phantom)
       self.phantom_set.update(phantoms)
+  def is_visible(self):
+    return int(sublime.version()) > 3124
