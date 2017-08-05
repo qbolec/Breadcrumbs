@@ -123,28 +123,37 @@ def make_breadcrumbs(view):
         break
     number_of_characters_left -= current_length
 
-  return separator.join(breadcrumbs + [''])
+  return breadcrumbs
 
 
 stylesheet = '''
   <style>
+    html {
+      --base-bg: color(var(--bluish) blend(var(--background) 30%));
+      --accent-bg: color(var(--base-bg) blend(var(--foreground) 60%));
+    }
     div.phantom-arrow {
       border-top: 0.4rem solid transparent;
-      border-left: 0.5rem solid color(var(--bluish) blend(var(--background) 30%));
+      border-left: 0.5rem solid var(--base-bg);
       width: 0;
       height: 0;
     }
     div.phantom {
-      padding: 0.4rem 0 0.4rem 0.7rem;
       margin: 0 0 0.2rem;
+      padding: 0.4rem 0;
       border-radius: 0 0.2rem 0.2rem 0.2rem;
-      background-color: color(var(--bluish) blend(var(--background) 30%));
-    }
-    div.phantom span.message {
-      padding-right: 0.7rem;
+      background-color: var(--base-bg);
     }
     div.phantom a {
       text-decoration: inherit;
+    }
+    div.phantom strong {
+      color:color(var(--base-bg) blend(var(--foreground) 30%));
+      padding: 0.4rem 0.7rem 0.4rem 0.7rem;
+    }
+    div.phantom .crumb {
+      padding: 0.4rem 0.7rem 0.4rem 0.7rem;
+      border-right: 1px solid var(--accent-bg);
     }
     div.phantom a.close {
       padding: 0.35rem 0.7rem 0.45rem 0.8rem;
@@ -168,10 +177,7 @@ template = '''
     {stylesheet}
     <div class="phantom-arrow"></div>
     <div class="phantom">
-      <span class="message">
-        <strong>Breadcrumbs:</strong> {breadcrumbs}
-        <a class="close" href="close">''' + chr(0x00D7) + '''</a>
-      </span>
+      <strong>Breadcrumbs:</strong><span>{breadcrumbs}</span><a class="close" href="close">''' + chr(0x00D7) + '''</a>
     </div>
   </body>
 '''
@@ -182,7 +188,8 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
   def on_selection_modified_async(self, view):
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     if settings.get('breadcrumbs_statusbar', True):
-      view.set_status('breadcrumbs', make_breadcrumbs(view))
+      separator = settings.get('breadcrumbs_separator', u' › ')
+      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view) + ['']))
     else:
       view.erase_status('breadcrumbs')
 
@@ -203,7 +210,15 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     for region in self.view.sel():
       line = self.view.line(region)
       (row, col) = self.view.rowcol(region.begin())
-      body = template.format(breadcrumbs=html.escape(make_breadcrumbs(self.view), quote=False), stylesheet=stylesheet)
+
+      crumb_elements = []
+      for crumb in make_breadcrumbs(self.view):
+        crumb_elements.append('<span class="crumb">' + html.escape(crumb, quote=False) + '</span>')
+
+      body = template.format(
+          breadcrumbs=''.join(crumb_elements),
+          stylesheet=stylesheet
+      )
       phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
       phantoms.append(phantom)
     self.phantom_set.update(phantoms)
