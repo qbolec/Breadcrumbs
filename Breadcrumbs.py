@@ -54,7 +54,7 @@ def get_breadcrumb(view, points, regex, limit):
 
 def make_breadcrumbs(view):
   tab_size = get_tab_size(view)
-  my_regex = settings.get('breadcrumbs_regex', u'(?P<name>.*)')
+  breadcrumb_regex = settings.get('breadcrumb_regex', u'(?P<name>.*)')
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
@@ -93,7 +93,7 @@ def make_breadcrumbs(view):
     current_indentation = get_row_indentation(points, view, tab_size, indentation)
     if current_indentation < indentation and not is_white_row(view, points):
       indentation = current_indentation
-      this_breadcrumb = get_breadcrumb(view, points, my_regex, breadcrumb_length_limit)
+      this_breadcrumb = get_breadcrumb(view, points, breadcrumb_regex, breadcrumb_length_limit)
       if not this_breadcrumb == '':
         breadcrumbs.append(this_breadcrumb)
 
