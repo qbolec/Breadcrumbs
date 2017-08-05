@@ -46,7 +46,7 @@ def get_breadcrumb(view, points, regex, limit):
     ch = view.substr(pt)
     if not ch.isspace():
       linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).strip()
-      match = re.search(re.compile(regex), linestring)
+      match = re.search(regex, linestring)
       if match:
         return(match.group('name'))
   return ''
