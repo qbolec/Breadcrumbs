@@ -40,3 +40,8 @@ You can edit Breadcrumbs.sublime-settings to specify the following values:
 | "breadcrumbs_separator" | String | " › " | Separate breadcrumbs using this character |
 | "breadcrumbs_regex" | String | "(?P<name>.*)" | Use only the part that matches the "name" group |
 | "breadcrumbs_statusbar" | Boolean | true | Optionally disable hide the breadcrumbs from the statusbar |
+
+### Example regexes
+
+To only show Python classes and methods use:  
+`"^\\s*(def|class)\\s+(?P<name>.+)\\(.*"`
