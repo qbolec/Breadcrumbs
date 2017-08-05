@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import math
 import re
 import html
 
@@ -13,8 +12,10 @@ except NameError:
 
 settings = sublime.load_settings('Breadcrumbs.sublime-settings')
 
+
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
+
 
 def get_row_indentation(points, view, tab_size, limit=1e20):
   pos = 0
@@ -35,24 +36,28 @@ def get_row_indentation(points, view, tab_size, limit=1e20):
 
   return pos
 
+
 def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
-def get_breadcrumb(view, points, regex, separator):
+
+def get_breadcrumb(view, points, regex, separator, limit):
   for pt in points:
     ch = view.substr(pt)
     if not ch.isspace():
-      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + 500))).strip()
+      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).strip()
+      print(regex)
       match = re.search(re.compile(regex), linestring)
       if match:
         return(separator + match.group('name'))
   return ''
 
+
 def make_breadcrumbs(view):
   tab_size = get_tab_size(view)
   my_regex = settings.get('breadcrumbs_regex', u'(?P<name>.*)')
-  breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   separator = settings.get('breadcrumbs_separator', u' › ')
+  breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
 
   view.erase_status('breadcrumbs')
@@ -63,7 +68,7 @@ def make_breadcrumbs(view):
   current_row = view.rowcol(view.sel()[0].b)[0]
 
   def get_row_start(row):
-    return view.text_point(row,0)
+    return view.text_point(row, 0)
 
   def get_points_by_row(row):
     return xrange(get_row_start(row), get_row_start(row + 1))
@@ -89,7 +94,7 @@ def make_breadcrumbs(view):
     current_indentation = get_row_indentation(points, view, tab_size, indentation)
     if current_indentation < indentation and not is_white_row(view, points):
       indentation = current_indentation
-      breadcrumbs.append(get_breadcrumb(view, points, my_regex, separator))
+      breadcrumbs.append(get_breadcrumb(view, points, my_regex, separator, breadcrumb_length_limit))
 
     current_row -= 1
 
@@ -97,7 +102,7 @@ def make_breadcrumbs(view):
   lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
   sorted_lengths = sorted(lengths)
   previous_length = 0
-  number_of_characters_left  = total_breadcrumbs_length_limit - len(lengths) * len(separator)
+  number_of_characters_left = total_breadcrumbs_length_limit - len(lengths) * len(separator)
   for (number_of_shorter, current_length) in enumerate(sorted_lengths):
     if previous_length < current_length:
       previous_length = current_length
@@ -118,7 +123,7 @@ def make_breadcrumbs(view):
         break
     number_of_characters_left -= current_length
 
-  return ''.join(breadcrumbs+[''])
+  return ''.join(breadcrumbs + [''])
 
 
 stylesheet = '''
