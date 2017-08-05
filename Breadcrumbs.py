@@ -149,7 +149,7 @@ stylesheet = '''
     }
     div.phantom strong {
       color:color(var(--base-bg) blend(var(--foreground) 30%));
-      padding: 0.4rem 0.7rem 0.4rem 0.7rem;
+      padding: 0.4rem 0 0.4rem 0.7rem;
     }
     div.phantom .crumb {
       padding: 0.4rem 0.7rem 0.4rem 0.7rem;
