@@ -10,8 +10,6 @@ try:
 except NameError:
   xrange = range
 
-settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-
 
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
@@ -52,7 +50,8 @@ def get_breadcrumb(view, points, regex, limit):
   return ''
 
 
-def make_breadcrumbs(view):             
+def make_breadcrumbs(view):
+  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
   breadcrumb_regex = settings.get('breadcrumb_regex', u'^\s*(?P<name>.*\\S)')
   separator = settings.get('breadcrumbs_separator', u' › ')
@@ -181,6 +180,7 @@ template = '''
 class BreadcrumbsCommand(sublime_plugin.EventListener):
 
   def on_selection_modified_async(self, view):
+    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     if settings.get('breadcrumbs_statusbar', True):
       view.set_status('breadcrumbs', make_breadcrumbs(view))
     else:
