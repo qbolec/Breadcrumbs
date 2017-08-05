@@ -165,7 +165,7 @@ stylesheet = '''
 
 
 template = '''
-  <body>
+  <body id="inline-breadcrumbs">
     {stylesheet}
     <div class="phantom-arrow"></div>
     <div class="phantom">
