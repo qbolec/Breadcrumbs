@@ -38,7 +38,7 @@ You can edit Breadcrumbs.sublime-settings to specify the following values:
 |"breadcrumb_length_limit" | Number | 100 | Trim each line to this many characters to form a breadcrumb |
 | "total_breadcrumbs_length_limit" | Number | 200 | Make sure that the total length of the status is no longer than this many characters, by trimming the longest breadcrumbs first |
 | "breadcrumbs_separator" | String | " › " | Separate breadcrumbs using this character |
-| "breadcrumbs_regex" | String | "(?P<name>.*)" | Use only the part that matches the "name" group |
+| "breadcrumbs_regex" | String | "^\\s*(?P<name>.*)" | Use only the part that matches the "name" group |
 | "breadcrumbs_statusbar" | Boolean | true | Optionally disable hide the breadcrumbs from the statusbar |
 
 ### Example regexes
