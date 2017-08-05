@@ -41,14 +41,14 @@ def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
 
-def get_breadcrumb(view, points, regex, separator, limit):
+def get_breadcrumb(view, points, regex, limit):
   for pt in points:
     ch = view.substr(pt)
     if not ch.isspace():
       linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).strip()
       match = re.search(re.compile(regex), linestring)
       if match:
-        return(separator + match.group('name'))
+        return(match.group('name'))
   return ''
 
 
@@ -93,7 +93,9 @@ def make_breadcrumbs(view):
     current_indentation = get_row_indentation(points, view, tab_size, indentation)
     if current_indentation < indentation and not is_white_row(view, points):
       indentation = current_indentation
-      breadcrumbs.append(get_breadcrumb(view, points, my_regex, separator, breadcrumb_length_limit))
+      this_breadcrumb = get_breadcrumb(view, points, my_regex, breadcrumb_length_limit)
+      if not this_breadcrumb == '':
+        breadcrumbs.append(this_breadcrumb)
 
     current_row -= 1
 
@@ -122,7 +124,7 @@ def make_breadcrumbs(view):
         break
     number_of_characters_left -= current_length
 
-  return ''.join(breadcrumbs + [''])
+  return separator.join(breadcrumbs + [''])
 
 
 stylesheet = '''
