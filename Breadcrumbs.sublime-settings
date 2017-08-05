@@ -2,6 +2,6 @@
   "breadcrumb_length_limit": 100,
   "total_breadcrumbs_length_limit": 200,
   "breadcrumbs_separator": " › ",
-  "breadcrumb_regex": "^\\s*(?P<name>.*)",
+  "breadcrumb_regex": "^\\s*(?P<name>.*\\S)",
   "breadcrumbs_statusbar": true
 }

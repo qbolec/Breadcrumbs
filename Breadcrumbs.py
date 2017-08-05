@@ -45,16 +45,16 @@ def get_breadcrumb(view, points, regex, limit):
   for pt in points:
     ch = view.substr(pt)
     if not ch.isspace():
-      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).rstrip()
+      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit)))
       match = re.search(regex, linestring)
       if match:
         return(match.group('name'))
   return ''
 
 
-def make_breadcrumbs(view):
+def make_breadcrumbs(view):             
   tab_size = get_tab_size(view)
-  breadcrumb_regex = settings.get('breadcrumb_regex', u'^\s*(?P<name>.*)')
+  breadcrumb_regex = settings.get('breadcrumb_regex', u'^\s*(?P<name>.*\\S)')
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
