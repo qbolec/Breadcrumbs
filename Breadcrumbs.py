@@ -51,16 +51,15 @@ def get_breadcrumb(view, points, regex, limit):
 
 
 def make_breadcrumbs(view, shorten):
+  if len(view.sel()) == 0:
+    return
+
   settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
   breadcrumb_regex = settings.get('breadcrumb_regex', u'^\s*(?P<name>.*\\S)')
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
-
-  if len(view.sel()) == 0:
-    return
-
   current_row = view.rowcol(view.sel()[0].b)[0]
 
   def get_row_start(row):
