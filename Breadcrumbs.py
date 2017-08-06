@@ -136,7 +136,7 @@ def copy(view, text):
 
 class BreadcrumbsCommand(sublime_plugin.EventListener):
 
-  def on_selection_modified_async(self, view):
+  def on_selection_modified(self, view):
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
