@@ -140,7 +140,7 @@ stylesheet = '''
     }
     div.phantom {
       margin: 0 0 0.2rem;
-      padding: 0.4rem 0;
+      padding: 0.4rem 0 0.4rem 0.7rem;
       border-radius: 0 0.2rem 0.2rem 0.2rem;
       background-color: var(--base-bg);
     }
@@ -149,16 +149,37 @@ stylesheet = '''
     }
     div.phantom strong {
       color:color(var(--base-bg) blend(var(--foreground) 30%));
-      padding: 0.4rem 0 0.4rem 0.7rem;
     }
-    div.phantom .crumb {
-      padding: 0.4rem 0.7rem 0.4rem 0.7rem;
-      border-right: 1px solid var(--accent-bg);
+    .crumb-1, .separator-1 {
+      background-color: var(--accent-bg);
+    }
+    .crumb-2, .separator-2 {
+      background-color: var(--base-bg);
+    }
+    .crumb-1,.crumb-2 {
+      line-height: 2rem;
+    }
+    .crumb-1,.crumb-2,.separator-1,.separator-2 {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .separator-1,.separator-2 {
+      border: 1rem solid;
+      width:0;
+      height:0;
+      font-size:1rem;
+      line-height:0px;
+    }
+    .separator-2 {
+      border-color: var(--base-bg);
+      border-left-color: var(--accent-bg);
+    }
+    .separator-1 {
+      border-color: var(--accent-bg);
+      border-left-color: var(--base-bg);
     }
     div.phantom a.close {
       padding: 0.35rem 0.7rem 0.45rem 0.8rem;
-      position: relative;
-      bottom: 0.05rem;
       border-radius: 0 0.2rem 0.2rem 0;
       font-weight: bold;
     }
@@ -176,9 +197,7 @@ template = '''
   <body id="inline-breadcrumbs">
     {stylesheet}
     <div class="phantom-arrow"></div>
-    <div class="phantom">
-      <strong>Breadcrumbs:</strong><span>{breadcrumbs}</span><a class="close" href="close">''' + chr(0x00D7) + '''</a>
-    </div>
+    <div class="phantom"><strong>Breadcrumbs:</strong>{breadcrumbs}<a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
   </body>
 '''
 
@@ -212,8 +231,9 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       (row, col) = self.view.rowcol(region.begin())
 
       crumb_elements = []
-      for crumb in make_breadcrumbs(self.view):
-        crumb_elements.append('<span class="crumb">' + html.escape(crumb, quote=False) + '</span>')
+      for i,crumb in enumerate(make_breadcrumbs(self.view)):
+        parity = (i % 2) + 1
+        crumb_elements.append('<span class="separator-{parity}"> </span><span class="crumb-{parity}">'.format(parity = parity) + html.escape(crumb, quote=False) + '</span>')
 
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
