@@ -167,7 +167,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     breadcrumbs = make_breadcrumbs(self.view)
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     separator = settings.get('breadcrumbs_separator', u' › ')
-    if len(breadcrumbs) > 1:
+    if len(breadcrumbs) > 0:
       breadcrumbs_element = '<br>'.join(breadcrumbs + [''])
     else:
       breadcrumbs_element = '<em>None</em>'
