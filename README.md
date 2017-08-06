@@ -45,3 +45,12 @@ You can edit Breadcrumbs.sublime-settings to specify the following values:
 
 To only show Python classes and methods use:  
 `"^\\s*(def|class)\\s+(?P<name>.+)\\(.*"`
+
+### Example keybindings
+
+This package doesn't provide keybindings for its commands, allowing you to customise them as you see fit. Here are some examples:
+
+```json
+{ "keys": ["super+ctrl+b"], "command": "breadcrumbs_popup" },
+{ "keys": ["super+ctrl+alt+b"], "command": "breadcrumbs_phantom" }
+```
