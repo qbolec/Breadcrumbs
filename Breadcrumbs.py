@@ -216,10 +216,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         div.phantom a {
           text-decoration: inherit;
         }
-        div.phantom strong {
-          color:color(var(--base-bg) blend(var(--foreground) 30%));
-          padding: 0.4rem 0 0.4rem 0.7rem;
-        }
         div.phantom .crumb {
           padding: 0.4rem 0.7rem 0.4rem 0.7rem;
           border-right: 1px solid var(--accent-bg);
@@ -245,7 +241,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         {stylesheet}
         <div class="phantom-arrow"></div>
         <div class="phantom">
-          <strong>Breadcrumbs:</strong><span>{breadcrumbs}</span><a class="close" href="close">''' + chr(0x00D7) + '''</a>
+          <span>{breadcrumbs}</span><a class="close" href="close">''' + chr(0x00D7) + '''</a>
         </div>
       </body>
     '''
@@ -255,7 +251,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     view.erase_phantoms('breadcrumbs')
 
     for region in view.sel():
-      line = view.line(region)
       (row, col) = view.rowcol(region.begin())
 
       crumb_elements = []
@@ -266,7 +261,12 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           breadcrumbs=''.join(crumb_elements),
           stylesheet=stylesheet
       )
-      phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
+      phantom = sublime.Phantom(
+          region,
+          body,
+          sublime.LAYOUT_BELOW,
+          self.on_phantom_close
+      )
       phantoms.append(phantom)
     self.phantom_set.update(phantoms)
 
