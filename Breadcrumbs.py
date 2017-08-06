@@ -58,8 +58,6 @@ def make_breadcrumbs(view, shorten):
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
 
-  view.erase_status('breadcrumbs')
-
   if len(view.sel()) == 0:
     return
 
@@ -138,6 +136,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
 
   def on_selection_modified(self, view):
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+    view.erase_status('breadcrumbs')
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
       view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, True)))
