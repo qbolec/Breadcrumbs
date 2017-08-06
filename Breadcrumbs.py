@@ -188,13 +188,21 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
   def __init__(self, view):
+    self.phantoms_visible = False
     self.view = view
     self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
 
-  def on_phantom_close(self, href):
+  def close_phantoms(self, href):
     self.view.erase_phantoms('breadcrumbs')
+    self.phantoms_visible = False
 
   def run(self, edit):
+    if self.phantoms_visible:
+      self.close_phantoms('close')
+      return
+    else:
+      self.close_phantoms('close')
+
     stylesheet = '''
       <style>
         html {
@@ -247,7 +255,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     '''
 
     phantoms = []
-    self.view.erase_phantoms('breadcrumbs')
 
     for region in self.view.sel():
       (row, col) = self.view.rowcol(region.begin())
@@ -264,10 +271,12 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           region,
           body,
           sublime.LAYOUT_BELOW,
-          self.on_phantom_close
+          self.close_phantoms
       )
       phantoms.append(phantom)
+
     self.phantom_set.update(phantoms)
+    self.phantoms_visible = True
 
   def is_visible(self):
     return int(sublime.version()) > 3124
