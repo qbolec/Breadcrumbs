@@ -50,7 +50,7 @@ def get_breadcrumb(view, points, regex, limit):
   return ''
 
 
-def make_breadcrumbs(view, shorten):
+def make_breadcrumbs(view, current_row, shorten):
   if len(view.sel()) == 0:
     return
 
@@ -60,7 +60,6 @@ def make_breadcrumbs(view, shorten):
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
-  current_row = view.rowcol(view.sel()[0].b)[0]
 
   def get_row_start(row):
     return view.text_point(row, 0)
@@ -138,7 +137,8 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     view.erase_status('breadcrumbs')
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
-      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, True)))
+      current_row = view.rowcol(view.sel()[0].b)[0]
+      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, True)))
     else:
       view.erase_status('breadcrumbs')
 
@@ -164,9 +164,11 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
       </body>
     '''
 
-    breadcrumbs = make_breadcrumbs(self.view, False)
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     separator = settings.get('breadcrumbs_separator', u' › ')
+    view = self.view
+    current_row = view.rowcol(view.sel()[0].b)[0]
+    breadcrumbs = make_breadcrumbs(view, current_row, False)
     if len(breadcrumbs) > 0:
       breadcrumbs_element = '<br>'.join(breadcrumbs + [''])
     else:
@@ -177,7 +179,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
         breadcrumbs_string=separator.join(breadcrumbs),
         stylesheet=stylesheet
     )
-    self.view.show_popup(body, max_width=512, on_navigate=lambda x: copy(self.view, x))
+    view.show_popup(body, max_width=512, on_navigate=lambda x: copy(view, x))
 
   def is_visible(self):
     return int(sublime.version()) > 3124
@@ -249,14 +251,15 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     '''
 
     phantoms = []
-    self.view.erase_phantoms('breadcrumbs')
+    view = self.view
+    view.erase_phantoms('breadcrumbs')
 
-    for region in self.view.sel():
-      line = self.view.line(region)
-      (row, col) = self.view.rowcol(region.begin())
+    for region in view.sel():
+      line = view.line(region)
+      (row, col) = view.rowcol(region.begin())
 
       crumb_elements = []
-      for crumb in make_breadcrumbs(self.view, False):
+      for crumb in make_breadcrumbs(view, row, False):
         crumb_elements.append('<span class="crumb">' + html.escape(crumb, quote=False) + '</span>')
 
       body = template.format(
