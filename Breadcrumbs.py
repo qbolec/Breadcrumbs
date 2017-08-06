@@ -156,7 +156,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
-      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view) + ['']).rstrip(separator))
+      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view)))
     else:
       view.erase_status('breadcrumbs')
 
@@ -174,7 +174,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
     body = template.format(
         breadcrumbs=breadcrumbs_element,
-        breadcrumbs_string=separator.join(breadcrumbs + ['']).rstrip(separator),
+        breadcrumbs_string=separator.join(breadcrumbs),
         stylesheet=stylesheet
     )
     self.view.show_popup(body, max_width=512, on_navigate=lambda x: copy(self.view, x))
