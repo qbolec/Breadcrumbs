@@ -247,14 +247,13 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     '''
 
     phantoms = []
-    view = self.view
-    view.erase_phantoms('breadcrumbs')
+    self.view.erase_phantoms('breadcrumbs')
 
-    for region in view.sel():
-      (row, col) = view.rowcol(region.begin())
+    for region in self.view.sel():
+      (row, col) = self.view.rowcol(region.begin())
 
       crumb_elements = []
-      for crumb in make_breadcrumbs(view, row, False):
+      for crumb in make_breadcrumbs(self.view, row, False):
         crumb_elements.append('<span class="crumb">' + html.escape(crumb, quote=False) + '</span>')
 
       body = template.format(
