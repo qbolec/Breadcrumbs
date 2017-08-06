@@ -1,5 +1,5 @@
 # Breadcrumbs
-A plugin to Sublime Text 2 and Sublime Text 3, which adds breadcrumbs to the status bar based on scopes the current line belongs to. Alternatively, the breadcrumbs can be displayed inline using the Show Breadcrumbs command.
+A plugin to Sublime Text 2 and Sublime Text 3, which adds breadcrumbs to the status bar based on scopes the current line belongs to. Alternatively, the breadcrumbs can be displayed in a popup using the Show Breadcrumbs command.
 This is done based on indentation, by assuming that scopes are indented.
 
 For example if your code looks like this:

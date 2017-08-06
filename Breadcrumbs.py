@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import html
 
 import sublime
 import sublime_plugin
@@ -126,59 +125,27 @@ def make_breadcrumbs(view):
   return breadcrumbs
 
 
+def copy(view, text):
+  sublime.set_clipboard(text)
+  view.hide_popup()
+  sublime.status_message('Breadcrumbs copied to clipboard')
+
+
 stylesheet = '''
-  <style>
-    html {
-      --base-bg: color(var(--bluish) blend(var(--background) 30%));
-      --accent-bg: color(var(--base-bg) blend(var(--foreground) 60%));
-    }
-    div.phantom-arrow {
-      border-top: 0.4rem solid transparent;
-      border-left: 0.5rem solid var(--base-bg);
-      width: 0;
-      height: 0;
-    }
-    div.phantom {
-      margin: 0 0 0.2rem;
-      padding: 0.4rem 0;
-      border-radius: 0 0.2rem 0.2rem 0.2rem;
-      background-color: var(--base-bg);
-    }
-    div.phantom a {
-      text-decoration: inherit;
-    }
-    div.phantom strong {
-      color:color(var(--base-bg) blend(var(--foreground) 30%));
-      padding: 0.4rem 0 0.4rem 0.7rem;
-    }
-    div.phantom .crumb {
-      padding: 0.4rem 0.7rem 0.4rem 0.7rem;
-      border-right: 1px solid var(--accent-bg);
-    }
-    div.phantom a.close {
-      padding: 0.35rem 0.7rem 0.45rem 0.8rem;
-      position: relative;
-      bottom: 0.05rem;
-      border-radius: 0 0.2rem 0.2rem 0;
-      font-weight: bold;
-    }
-    html.dark div.phantom a.close {
-      background-color: #00000018;
-    }
-    html.light div.phantom a.close {
-      background-color: #ffffff18;
-    }
-  </style>
+  p {
+    margin-top: 0;
+  }
+  a {
+    font-family: system;
+    font-size: 1.05rem;
+  }
 '''
 
-
 template = '''
-  <body id="inline-breadcrumbs">
-    {stylesheet}
-    <div class="phantom-arrow"></div>
-    <div class="phantom">
-      <strong>Breadcrumbs:</strong><span>{breadcrumbs}</span><a class="close" href="close">''' + chr(0x00D7) + '''</a>
-    </div>
+  <body id=show-scope>
+      <style>{stylesheet}</style>
+      <p>{breadcrumbs}</p>
+      <a href="{breadcrumbs_string}">Copy</a>
   </body>
 '''
 
@@ -189,39 +156,28 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
-      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view) + ['']))
+      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view) + ['']).rstrip(separator))
     else:
       view.erase_status('breadcrumbs')
 
 
-class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
-
-  def __init__(self, view):
-    self.view = view
-    self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
-
-  def on_phantom_close(self, href):
-    self.view.erase_phantoms('breadcrumbs')
+class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
   def run(self, edit):
-    phantoms = []
-    self.view.erase_phantoms('breadcrumbs')
+    breadcrumbs = make_breadcrumbs(self.view)
+    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+    separator = settings.get('breadcrumbs_separator', u' › ')
+    if len(breadcrumbs) > 1:
+      breadcrumbs_element = '<br>'.join(breadcrumbs + [''])
+    else:
+      breadcrumbs_element = '<em>None</em>'
 
-    for region in self.view.sel():
-      line = self.view.line(region)
-      (row, col) = self.view.rowcol(region.begin())
-
-      crumb_elements = []
-      for crumb in make_breadcrumbs(self.view):
-        crumb_elements.append('<span class="crumb">' + html.escape(crumb, quote=False) + '</span>')
-
-      body = template.format(
-          breadcrumbs=''.join(crumb_elements),
-          stylesheet=stylesheet
-      )
-      phantom = sublime.Phantom(line, body, sublime.LAYOUT_BLOCK, self.on_phantom_close)
-      phantoms.append(phantom)
-    self.phantom_set.update(phantoms)
+    body = template.format(
+        breadcrumbs=breadcrumbs_element,
+        breadcrumbs_string=separator.join(breadcrumbs + ['']).rstrip(separator),
+        stylesheet=stylesheet
+    )
+    self.view.show_popup(body, max_width=512, on_navigate=lambda x: copy(self.view, x))
 
   def is_visible(self):
     return int(sublime.version()) > 3124
