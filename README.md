@@ -14,12 +14,12 @@ foo(){
     }
 }
 ```
-and the carret is currently in the line with `zoo`, then the breadbrumbs would be:
+and the caret is currently in the line with `zoo`, then the breadbrumbs would be:
 `foo(){`, `bar:`, `} else {`, and `blah->`.
 
 This approach is quite language agnostic, and I find it mostly usefull for code which spans many lines in which tracking indentation and context is difficult to me (for example in .sass files).
 
-## Instalation
+## Installation
 
 The easiest way is to use [Package Control](https://packagecontrol.io/):
 
