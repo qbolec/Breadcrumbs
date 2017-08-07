@@ -196,6 +196,8 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
 
   def close_phantoms(self, href):
+    if href is not 'close':
+      copy(self.view, href)
     self.view.erase_phantoms('breadcrumbs')
     self.phantoms_visible = False
 
@@ -252,13 +254,15 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           border-color: var(--accent-bg);
           border-left-color: var(--base-bg);
         }
-        div.phantom a.close {
+        div.phantom a {
           vertical-align: middle;
           line-height: 2rem;
           padding: 0 0.7rem 0 0.8rem;
+          background-color: var(--base-bg);
+        }
+        div.phantom a.close {
           border-radius: 0 0.2rem 0.2rem 0;
           font-weight: bold;
-          background-color: var(--base-bg);
         }
       </style>
     '''
@@ -267,10 +271,11 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       <body id="inline-breadcrumbs">
         {stylesheet}
         <div class="phantom-arrow"></div>
-        <div class="phantom">{breadcrumbs}<a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        <div class="phantom">{breadcrumbs}<a href="{breadcrumbs_string}">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
       </body>
     '''
-
+    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+    separator = settings.get('breadcrumbs_separator', u' › ')
     phantoms = []
 
     for region in self.view.sel():
@@ -283,6 +288,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
+          breadcrumbs_string=html.escape(separator.join(make_breadcrumbs(self.view, row, False)), quote=True),
           stylesheet=stylesheet
       )
       phantom = sublime.Phantom(
