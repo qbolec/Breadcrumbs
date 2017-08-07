@@ -277,9 +277,9 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       (row, col) = self.view.rowcol(region.begin())
 
       crumb_elements = []
-      for i,crumb in enumerate(make_breadcrumbs(self.view, row, False)):
+      for i, crumb in enumerate(make_breadcrumbs(self.view, row, False)):
         parity = (i % 2) + 1
-        crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity = parity) + html.escape(crumb, quote=False) + '</span>')
+        crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
 
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
