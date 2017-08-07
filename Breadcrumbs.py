@@ -123,7 +123,7 @@ def make_breadcrumbs(view, current_row, shorten):
 
 
 def copy(view, text):
-  sublime.set_clipboard(text)
+  sublime.set_clipboard(html.parser.HTMLParser().unescape(text))
   view.hide_popup()
   sublime.status_message('Breadcrumbs copied to clipboard')
 
@@ -178,7 +178,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
     body = template.format(
         breadcrumbs=breadcrumbs_element,
-        breadcrumbs_string=separator.join(breadcrumbs),
+        breadcrumbs_string=html.escape(separator.join(breadcrumbs), quote=True),
         stylesheet=stylesheet
     )
     view.show_popup(body, max_width=512, on_navigate=lambda x: copy(view, x))
