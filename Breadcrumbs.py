@@ -40,14 +40,12 @@ def is_white_row(view, points):
 
 
 def get_breadcrumb(view, points, regex, limit):
-  for pt in points:
-    ch = view.substr(pt)
-    if not ch.isspace():
-      linestring = view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit)))
-      match = re.search(regex, linestring)
-      if match:
-        return(match.group('name'))
-  return ''
+  linestring = view.substr(sublime.Region(min(points), min(view.line(min(points)).b, min(points) + limit)))
+  match = re.search(regex, linestring)
+  if match:
+    return(match.group('name'))
+  else:
+    return ''
 
 
 def make_breadcrumbs(view, current_row, shorten):
