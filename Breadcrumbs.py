@@ -207,7 +207,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       <style>
         html {
           --base-bg: color(var(--bluish) blend(var(--background) 30%));
-          --accent-bg: color(var(--base-bg) blend(var(--foreground) 60%));
+          --accent-bg: color(var(--base-bg) blend(var(--foreground) 90%));
         }
         div.phantom-arrow {
           border-top: 0.4rem solid transparent;
@@ -217,54 +217,45 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         }
         div.phantom {
           margin: 0 0 0.2rem;
-          padding: 0.4rem 0 0.4rem 0.7rem;
           border-radius: 0 0.2rem 0.2rem 0.2rem;
-          background-color: var(--base-bg);
         }
         div.phantom a {
           text-decoration: inherit;
         }
-        div.phantom strong {
-          color:color(var(--base-bg) blend(var(--foreground) 30%));
-        }
-        .crumb-1, .separator-1 {
-          background-color: var(--accent-bg);
-        }
-        .crumb-2, .separator-2 {
-          background-color: var(--base-bg);
-        }
-        .crumb-1,.crumb-2 {
+       .crumb {
           line-height: 2rem;
+          padding-right: 1rem;
         }
-        .crumb-1,.crumb-2,.separator-1,.separator-2 {
-          display: inline-block;
-          vertical-align: middle;
-        }
-        .separator-1,.separator-2 {
+        .separator {
           border: 1rem solid;
           width:0;
           height:0;
           font-size:1rem;
           line-height:0px;
         }
+        .crumb-1,
+        .separator-1 {
+          background-color: var(--base-bg);
+        }
+        .crumb-2,
         .separator-2 {
+          background-color: var(--accent-bg);
+        }
+        .separator-1 {
           border-color: var(--base-bg);
           border-left-color: var(--accent-bg);
         }
-        .separator-1 {
+        .separator-2 {
           border-color: var(--accent-bg);
           border-left-color: var(--base-bg);
         }
         div.phantom a.close {
-          padding: 0.35rem 0.7rem 0.45rem 0.8rem;
+          vertical-align: middle;
+          line-height: 2rem;
+          padding: 0 0.7rem 0 0.8rem;
           border-radius: 0 0.2rem 0.2rem 0;
           font-weight: bold;
-        }
-        html.dark div.phantom a.close {
-          background-color: #00000018;
-        }
-        html.light div.phantom a.close {
-          background-color: #ffffff18;
+          background-color: var(--base-bg);
         }
       </style>
     '''
@@ -273,7 +264,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       <body id="inline-breadcrumbs">
         {stylesheet}
         <div class="phantom-arrow"></div>
-        <div class="phantom"><strong>Breadcrumbs:</strong>{breadcrumbs}<a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        <div class="phantom">{breadcrumbs}<a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
       </body>
     '''
 
@@ -285,7 +276,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       crumb_elements = []
       for i,crumb in enumerate(make_breadcrumbs(self.view, row, False)):
         parity = (i % 2) + 1
-        crumb_elements.append('<span class="separator-{parity}"> </span><span class="crumb-{parity}">'.format(parity = parity) + html.escape(crumb, quote=False) + '</span>')
+        crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity = parity) + html.escape(crumb, quote=False) + '</span>')
 
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
