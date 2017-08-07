@@ -138,7 +138,11 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     if settings.get('breadcrumbs_statusbar', True):
       separator = settings.get('breadcrumbs_separator', u' › ')
       current_row = view.rowcol(view.sel()[0].b)[0]
-      view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, True)))
+      breadcrumbs = make_breadcrumbs(view, current_row, False)
+      if breadcrumbs is None or len(breadcrumbs) < 1:
+        view.erase_status('breadcrumbs')
+      else:
+        view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, True)))
     else:
       view.erase_status('breadcrumbs')
 
