@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 import html
-import html.parser
 
 import sublime
 import sublime_plugin
@@ -124,7 +123,7 @@ def make_breadcrumbs(view, current_row, shorten):
 
 
 def copy(view, text):
-  sublime.set_clipboard(html.parser.HTMLParser().unescape(text))
+  sublime.set_clipboard(text)
   view.hide_popup()
   sublime.status_message('Breadcrumbs copied to clipboard')
 
@@ -163,7 +162,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
       <body id=show-scope>
           <style>{stylesheet}</style>
           <p>{breadcrumbs}</p>
-          <a href="{breadcrumbs_string}">Copy</a>
+          <a href="copy">Copy</a>
       </body>
     '''
 
@@ -177,12 +176,12 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     else:
       breadcrumbs_element = '<em>None</em>'
 
+    breadcrumbs_string = separator.join(breadcrumbs)
     body = template.format(
         breadcrumbs=breadcrumbs_element,
-        breadcrumbs_string=html.escape(separator.join(breadcrumbs), quote=True),
         stylesheet=stylesheet
     )
-    view.show_popup(body, max_width=512, on_navigate=lambda x: copy(view, x))
+    view.show_popup(body, max_width=512, on_navigate=copy(view, breadcrumbs_string))
 
   def is_visible(self):
     return int(sublime.version()) > 3124
