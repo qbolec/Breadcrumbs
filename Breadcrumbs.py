@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import html
+import html.parser
 
 import sublime
 import sublime_plugin
