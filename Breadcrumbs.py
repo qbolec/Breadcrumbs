@@ -213,30 +213,21 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         html {
           --base-bg: color(var(--bluish) blend(var(--background) 30%));
           --accent-bg: color(var(--base-bg) blend(var(--foreground) 90%));
-        }
-        div.phantom-arrow {
-          border-top: 0.4rem solid transparent;
-          border-left: 0.5rem solid var(--base-bg);
-          width: 0;
-          height: 0;
+          line-height: 20px;
         }
         div.phantom {
-          margin: 0 0 0.2rem;
-          border-radius: 0 0.2rem 0.2rem 0.2rem;
+          margin: 0;
         }
-        div.phantom a {
-          text-decoration: inherit;
-        }
-       .crumb {
-          line-height: 2rem;
-          padding-right: 1rem;
+        .crumb {
+          line-height: 2em;
+          padding-right: 6px;
         }
         .separator {
-          border: 1rem solid;
-          width:0;
-          height:0;
-          font-size:1rem;
-          line-height:0px;
+          border: 1em solid;
+          width: 0;
+          height: 0;
+          font-size: inherit;
+          line-height: 0px;
         }
         .crumb-1,
         .separator-1 {
@@ -255,14 +246,15 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           border-left-color: var(--base-bg);
         }
         div.phantom a {
+          text-decoration: inherit;
           vertical-align: middle;
-          line-height: 2rem;
-          padding: 0 0.7rem 0 0.8rem;
+          line-height: 2em;
+          padding: 0 7px 0 12px;
           background-color: var(--base-bg);
         }
         div.phantom a.close {
-          border-radius: 0 0.2rem 0.2rem 0;
           font-weight: bold;
+          padding-left: 4px;
         }
       </style>
     '''
@@ -270,7 +262,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     template = '''
       <body id="inline-breadcrumbs">
         {stylesheet}
-        <div class="phantom-arrow"></div>
         <div class="phantom">{breadcrumbs}<a href="{breadcrumbs_string}">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
       </body>
     '''
@@ -294,7 +285,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       phantom = sublime.Phantom(
           region,
           body,
-          sublime.LAYOUT_BELOW,
+          sublime.LAYOUT_BLOCK,
           self.close_phantoms
       )
       phantoms.append(phantom)
