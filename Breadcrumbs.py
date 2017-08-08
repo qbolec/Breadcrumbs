@@ -48,7 +48,7 @@ def get_breadcrumb(view, points, regex, limit):
     return ''
 
 
-def make_breadcrumbs(view, current_row, shorten):
+def make_breadcrumbs(view, current_row, shorten=False):
   if len(view.sel()) == 0:
     return
 
@@ -141,10 +141,10 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     if statusbar_enabled:
       separator = settings.get('breadcrumbs_separator', u' › ')
       current_row = view.rowcol(view.sel()[0].b)[0]
-      breadcrumbs = make_breadcrumbs(view, current_row, False)
+      breadcrumbs = make_breadcrumbs(view, current_row)
 
       if breadcrumbs is not None and len(breadcrumbs) > 0:
-        view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, True)))
+        view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, shorten=True)))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
@@ -172,7 +172,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     separator = settings.get('breadcrumbs_separator', u' › ')
     view = self.view
     current_row = view.rowcol(view.sel()[0].b)[0]
-    breadcrumbs = make_breadcrumbs(view, current_row, False)
+    breadcrumbs = make_breadcrumbs(view, current_row)
     escaped_crumbs = []
     if len(breadcrumbs) > 0:
       for crumb in breadcrumbs:
