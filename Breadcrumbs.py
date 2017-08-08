@@ -205,7 +205,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     self.strings = {}
 
   def navigate(self, href):
-    print(self.strings)
     if href == 'close':
       self.view.erase_phantoms('breadcrumbs')
       self.phantoms_visible = False
