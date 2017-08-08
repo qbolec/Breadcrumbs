@@ -39,13 +39,18 @@ You can edit Breadcrumbs.sublime-settings to specify the following values:
 |"breadcrumb_length_limit" | Number | 100 | Trim each breadcrumb to this many characters |
 | "total_breadcrumbs_length_limit" | Number | 200 | Limit the total length of the breadcrumbs, by trimming the longest breadcrumbs first |
 | "breadcrumbs_separator" | String | " › " | Separate breadcrumbs using this string |
-| "breadcrumbs_regex" | String | "^\\s*(?P<name>.*\\S)" | Use only the part that matches the "name" group |
 | "breadcrumbs_statusbar" | Boolean | true | Optionally hide the breadcrumbs from the statusbar |
 
-### Example regexes
+### Tuning the breadcrumbs with regular expressions
 
-- For Python classes and methods: `"^\\s*(def|class)\\s+(?P<name>.+)\\(.*"`
-- For JSON: `"^\\s*\"(?P<name>[^\"]+)\".*"`
+This packages comes with a very basic regex (`"^\\s*(?P<name>.*\\S)"`) to clean up each breadcrumb. Only the part that matches the "name" group is used.
+
+You can create [Syntax Specific settings](https://www.sublimetext.com/docs/3/settings.html) to fine-tune it for each language you use. Some examples:
+
+- For Python  
+`"breadcrumb_regex": "(?i)^\\s*(def|class)\\s*(?P<name>[a-z0-9-_ ]+)\\b"`
+- For JSON  
+`"breadcrumb_regex": "^\\s*\"(?P<name>[^\"]+)\".*"`
 
 ### Example keybindings
 
