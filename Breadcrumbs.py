@@ -186,7 +186,11 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
         breadcrumbs=breadcrumbs_element,
         stylesheet=stylesheet
     )
-    view.show_popup(body, max_width=512, on_navigate=copy(view, breadcrumbs_string))
+    view.show_popup(
+        body,
+        max_width=512,
+        on_navigate=lambda x: copy(view, breadcrumbs_string)
+    )
 
   def is_visible(self):
     return int(sublime.version()) > 3124
