@@ -175,7 +175,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     escaped_crumbs = []
     if len(breadcrumbs) > 0:
       for crumb in breadcrumbs:
-        escaped_crumbs.append(html.escape(crumb))
+        escaped_crumbs.append(html.escape(crumb, quote=False))
       breadcrumbs_element = '<br>'.join(escaped_crumbs)
     else:
       breadcrumbs_element = '<em>None</em>'
