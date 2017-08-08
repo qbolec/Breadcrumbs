@@ -132,12 +132,17 @@ def copy(view, text):
 class BreadcrumbsCommand(sublime_plugin.EventListener):
 
   def on_selection_modified(self, view):
-    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     view.erase_status('breadcrumbs')
-    if settings.get('breadcrumbs_statusbar', True):
+
+    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+    default_statusbar_enabled = settings.get('show_breadcrumbs_in_statusbar', True)
+    statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
+
+    if statusbar_enabled:
       separator = settings.get('breadcrumbs_separator', u' › ')
       current_row = view.rowcol(view.sel()[0].b)[0]
       breadcrumbs = make_breadcrumbs(view, current_row, False)
+
       if breadcrumbs is not None and len(breadcrumbs) > 0:
         view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, True)))
 

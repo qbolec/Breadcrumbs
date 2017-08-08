@@ -39,7 +39,9 @@ You can edit Breadcrumbs.sublime-settings to specify the following values:
 |"breadcrumb_length_limit" | Number | 100 | Trim each breadcrumb to this many characters |
 | "total_breadcrumbs_length_limit" | Number | 200 | Limit the total length of the breadcrumbs, by trimming the longest breadcrumbs first |
 | "breadcrumbs_separator" | String | " › " | Separate breadcrumbs using this string |
-| "breadcrumbs_statusbar" | Boolean | true | Optionally hide the breadcrumbs from the statusbar |
+| "show_breadcrumbs_in_statusbar" | Boolean | true | Optionally hide the breadcrumbs from the statusbar |
+
+The `"show_breadcrumbs_in_statusbar"` setting can also be changed [per syntax](https://www.sublimetext.com/docs/3/settings.html), you can also turn it off globally and enable it only for specific languages (or projects even).
 
 ### Tuning the breadcrumbs with regular expressions
 
