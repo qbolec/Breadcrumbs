@@ -202,19 +202,23 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     self.phantoms_visible = False
     self.view = view
     self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
+    self.strings = {}
 
-  def close_phantoms(self, href):
-    if href is not 'close':
-      copy(self.view, href)
-    self.view.erase_phantoms('breadcrumbs')
-    self.phantoms_visible = False
+  def navigate(self, href):
+    print(self.strings)
+    if href == 'close':
+      self.view.erase_phantoms('breadcrumbs')
+      self.phantoms_visible = False
+      self.strings = {}
+    else:
+      copy(self.view, self.strings[href])
 
   def run(self, edit):
     if self.phantoms_visible:
-      self.close_phantoms('close')
+      self.navigate('close')
       return
     else:
-      self.close_phantoms('close')
+      self.navigate('close')
 
     stylesheet = '''
       <style>
@@ -270,9 +274,10 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     template = '''
       <body id="inline-breadcrumbs">
         {stylesheet}
-        <div class="phantom">{breadcrumbs}<a href="{breadcrumbs_string}">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        <div class="phantom">{breadcrumbs}<a href="{href}">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
       </body>
     '''
+
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     separator = settings.get('breadcrumbs_separator', u' › ')
     phantoms = []
@@ -280,21 +285,23 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     for region in self.view.sel():
       (row, col) = self.view.rowcol(region.begin())
 
+      id = str(row)
       crumb_elements = []
-      for i, crumb in enumerate(make_breadcrumbs(self.view, row, False)):
+      for i, crumb in enumerate(make_breadcrumbs(self.view, row)):
         parity = (i % 2) + 1
         crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
 
+      self.strings[id] = separator.join(make_breadcrumbs(self.view, row))
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
-          breadcrumbs_string=html.escape(separator.join(make_breadcrumbs(self.view, row, False)), quote=True),
+          href=id,
           stylesheet=stylesheet
       )
       phantom = sublime.Phantom(
           region,
           body,
           sublime.LAYOUT_BLOCK,
-          self.close_phantoms
+          on_navigate=lambda x: self.navigate(x)
       )
       phantoms.append(phantom)
 
