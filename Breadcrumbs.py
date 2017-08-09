@@ -272,7 +272,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     template = '''
       <body id="inline-breadcrumbs">
         {stylesheet}
-        <div class="phantom">{breadcrumbs}<a href="{href}">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        <div class="phantom">{breadcrumbs}<a href="copy">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
       </body>
     '''
 
@@ -283,7 +283,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     for region in self.view.sel():
       (row, col) = self.view.rowcol(region.begin())
 
-      id = str(row)
       crumb_elements = []
       breadcrumbs = make_breadcrumbs(self.view, row);
       for i, crumb in enumerate(breadcrumbs):
@@ -293,7 +292,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       breadcrumbs_string = separator.join(breadcrumbs)
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
-          href=id,
           stylesheet=stylesheet
       )
       phantom = sublime.Phantom(
