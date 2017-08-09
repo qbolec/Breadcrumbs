@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import html
+import time
 
 import sublime
 import sublime_plugin
@@ -14,26 +15,26 @@ except NameError:
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
 
+def get_row_indentation(line_start, view, tab_size, indentation_limit = None):
+  if indentation_limit is None:
+    row = view.rowcol(line_start)[0]
+    indentation_limit = view.text_point(row +1, 0) - line_start
 
-def get_row_indentation(points, view, tab_size, limit=1e20):
   pos = 0
-  for pt in points:
-    ch = view.substr(pt)
-
+  for ch in view.substr(sublime.Region(line_start, line_start + indentation_limit)):
     if ch == '\t':
       pos += tab_size - (pos % tab_size)
 
-    elif ch.isspace():
+    elif ch == ' ':
       pos += 1
 
     else:
       break
 
-    if limit <= pos:
+    if indentation_limit <= pos:
       break
 
   return pos
-
 
 def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
@@ -45,7 +46,7 @@ def get_breadcrumb(view, points, regex, limit):
   if match:
     return(match.group('name'))
   else:
-    return ''
+    return None
 
 
 def make_breadcrumbs(view, current_row, shorten=False):
@@ -59,7 +60,6 @@ def make_breadcrumbs(view, current_row, shorten=False):
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
-
   def get_row_start(row):
     return view.text_point(row, 0)
 
@@ -73,9 +73,9 @@ def make_breadcrumbs(view, current_row, shorten=False):
     if current_row < 0:
       return
 
-    indentation = get_row_indentation(get_points_by_row(current_row), view, tab_size) + 1
+    indentation = get_row_indentation(get_row_start(current_row), view, tab_size) + 1
   else:
-    indentation = get_row_indentation(get_points_by_row(current_row), view, tab_size)
+    indentation = get_row_indentation(get_row_start(current_row), view, tab_size)
     current_row -= 1
 
   breadcrumbs = []
@@ -84,11 +84,11 @@ def make_breadcrumbs(view, current_row, shorten=False):
     line_start = get_row_start(current_row)
     points = xrange(line_start, last_line_start)
     last_line_start = line_start
-    current_indentation = get_row_indentation(points, view, tab_size, indentation)
+    current_indentation = get_row_indentation(line_start, view, tab_size, indentation)
     if current_indentation < indentation and not is_white_row(view, points):
       indentation = current_indentation
       this_breadcrumb = get_breadcrumb(view, points, breadcrumb_regex, breadcrumb_length_limit)
-      if not this_breadcrumb == '':
+      if this_breadcrumb is not None:
         breadcrumbs.append(this_breadcrumb)
 
     current_row -= 1
@@ -119,7 +119,6 @@ def make_breadcrumbs(view, current_row, shorten=False):
               breadcrumbs[index_of_breadcrumb] = breadcrumbs[index_of_breadcrumb][0:length_of_trim]
           break
       number_of_characters_left -= current_length
-
   return breadcrumbs
 
 
@@ -141,10 +140,10 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     if statusbar_enabled:
       separator = settings.get('breadcrumbs_separator', u' › ')
       current_row = view.rowcol(view.sel()[0].b)[0]
-      breadcrumbs = make_breadcrumbs(view, current_row)
+      breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
       if breadcrumbs is not None and len(breadcrumbs) > 0:
-        view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, shorten=True)))
+        view.set_status('breadcrumbs', separator.join(breadcrumbs))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
