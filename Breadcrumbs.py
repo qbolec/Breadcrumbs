@@ -202,22 +202,21 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     self.phantoms_visible = False
     self.view = view
     self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
-    self.strings = {}
 
-  def navigate(self, href):
+  def close(self):
+    self.view.erase_phantoms('breadcrumbs')
+    self.phantoms_visible = False
+
+  def navigate(self, href, breadcrumbs_string):
     if href == 'close':
-      self.view.erase_phantoms('breadcrumbs')
-      self.phantoms_visible = False
-      self.strings = {}
+      self.close();
     else:
-      copy(self.view, self.strings[href])
+      copy(self.view, breadcrumbs_string)
 
   def run(self, edit):
     if self.phantoms_visible:
-      self.navigate('close')
+      self.close();
       return
-    else:
-      self.navigate('close')
 
     stylesheet = '''
       <style>
@@ -286,11 +285,12 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
       id = str(row)
       crumb_elements = []
-      for i, crumb in enumerate(make_breadcrumbs(self.view, row)):
+      breadcrumbs = make_breadcrumbs(self.view, row);
+      for i, crumb in enumerate(breadcrumbs):
         parity = (i % 2) + 1
         crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
 
-      self.strings[id] = separator.join(make_breadcrumbs(self.view, row))
+      breadcrumbs_string = separator.join(breadcrumbs)
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
           href=id,
@@ -300,7 +300,8 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           region,
           body,
           sublime.LAYOUT_BLOCK,
-          on_navigate=lambda x: self.navigate(x)
+          # see: https://stackoverflow.com/questions/10452770/python-lambdas-binding-to-local-values
+          on_navigate=lambda href, breadcrumbs_string=breadcrumbs_string: self.navigate(href, breadcrumbs_string)
       )
       phantoms.append(phantom)
 
