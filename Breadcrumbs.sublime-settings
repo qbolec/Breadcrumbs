@@ -1,5 +1,5 @@
 {
-  "breadcrumb_regex": "^\\s*(?P<name>.*\\S)",
+  "breadcrumb_regex": "^([{}\\(\\)\\[\\]\\s])*\\s*(?P<name>[^{\\(\\[]*[^:{\\(\\[\\s])",
   "breadcrumb_length_limit": 100,
   "total_breadcrumbs_length_limit": 200,
   "breadcrumbs_separator": " › ",
