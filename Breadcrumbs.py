@@ -56,9 +56,9 @@ def make_breadcrumbs(view, current_row, shorten=False):
 
   settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
-  default_breadcrumb_regex = settings.get('breadcrumb_regex', u'')
+  default_breadcrumb_regex = settings.get('breadcrumb_regex', u'(?P<name>.*)')
   breadcrumb_regex = view.settings().get('breadcrumb_regex', default_breadcrumb_regex)
-  separator = settings.get('breadcrumbs_separator', u' › ')
+  separator = settings.get('breadcrumbs_separator', u' ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
 
@@ -140,7 +140,7 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
 
     if statusbar_enabled:
-      separator = settings.get('breadcrumbs_separator', u' › ')
+      separator = settings.get('breadcrumbs_separator', u' ')
       current_row = view.rowcol(view.sel()[0].b)[0]
       breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
@@ -170,7 +170,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     '''
 
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-    separator = settings.get('breadcrumbs_separator', u' › ')
+    separator = settings.get('breadcrumbs_separator', u' ')
     view = self.view
     current_row = view.rowcol(view.sel()[0].b)[0]
     breadcrumbs = make_breadcrumbs(view, current_row)
