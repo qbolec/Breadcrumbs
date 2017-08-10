@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 import html
-import time
 
 import sublime
 import sublime_plugin
@@ -15,10 +14,11 @@ except NameError:
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
 
-def get_row_indentation(line_start, view, tab_size, indentation_limit = None):
+
+def get_row_indentation(line_start, view, tab_size, indentation_limit=None):
   if indentation_limit is None:
     row = view.rowcol(line_start)[0]
-    indentation_limit = view.text_point(row +1, 0) - line_start
+    indentation_limit = view.text_point(row + 1, 0) - line_start
 
   pos = 0
   for ch in view.substr(sublime.Region(line_start, line_start + indentation_limit)):
@@ -35,6 +35,7 @@ def get_row_indentation(line_start, view, tab_size, indentation_limit = None):
       break
 
   return pos
+
 
 def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
@@ -60,6 +61,7 @@ def make_breadcrumbs(view, current_row, shorten=False):
   separator = settings.get('breadcrumbs_separator', u' › ')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
   total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
+
   def get_row_start(row):
     return view.text_point(row, 0)
 
@@ -208,13 +210,13 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
   def navigate(self, href, breadcrumbs_string):
     if href == 'close':
-      self.close();
+      self.close()
     else:
       copy(self.view, breadcrumbs_string)
 
   def run(self, edit):
     if self.phantoms_visible:
-      self.close();
+      self.close()
       return
 
     stylesheet = '''
@@ -283,7 +285,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       (row, col) = self.view.rowcol(region.begin())
 
       crumb_elements = []
-      breadcrumbs = make_breadcrumbs(self.view, row);
+      breadcrumbs = make_breadcrumbs(self.view, row)
       for i, crumb in enumerate(breadcrumbs):
         parity = (i % 2) + 1
         crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
@@ -297,7 +299,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           region,
           body,
           sublime.LAYOUT_BLOCK,
-          # see: https://stackoverflow.com/questions/10452770/python-lambdas-binding-to-local-values
           on_navigate=lambda href, breadcrumbs_string=breadcrumbs_string: self.navigate(href, breadcrumbs_string)
       )
       phantoms.append(phantom)
