@@ -141,10 +141,10 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     if statusbar_enabled:
       separator = settings.get('breadcrumbs_separator', u' › ')
       current_row = view.rowcol(view.sel()[0].b)[0]
-      breadcrumbs = make_breadcrumbs(view, current_row)
+      breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
       if breadcrumbs is not None and len(breadcrumbs) > 0:
-        view.set_status('breadcrumbs', separator.join(make_breadcrumbs(view, current_row, shorten=True)))
+        view.set_status('breadcrumbs', separator.join(breadcrumbs))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
