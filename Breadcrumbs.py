@@ -41,6 +41,13 @@ def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
 
+def get_separator(view):
+  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+  default_separator = settings.get('breadcrumbs_separator', u' ')
+  separator = view.settings().get('breadcrumbs_separator', default_separator)
+  return separator
+
+
 def get_breadcrumb(view, points, regex, limit):
   linestring = view.substr(sublime.Region(min(points), min(view.line(min(points)).b, min(points) + limit)))
   match = re.search(regex, linestring)
@@ -56,11 +63,11 @@ def make_breadcrumbs(view, current_row, shorten=False):
 
   settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
+
   default_breadcrumb_regex = settings.get('breadcrumb_regex', u'(?P<name>.*)')
   breadcrumb_regex = view.settings().get('breadcrumb_regex', default_breadcrumb_regex)
-  separator = settings.get('breadcrumbs_separator', u' ')
+
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
-  total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
 
   def get_row_start(row):
     return view.text_point(row, 0)
@@ -98,10 +105,11 @@ def make_breadcrumbs(view, current_row, shorten=False):
   breadcrumbs.reverse()
 
   if shorten:
+    total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
     lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
     sorted_lengths = sorted(lengths)
     previous_length = 0
-    number_of_characters_left = total_breadcrumbs_length_limit - len(lengths) * len(separator)
+    number_of_characters_left = total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view))
     for (number_of_shorter, current_length) in enumerate(sorted_lengths):
       if previous_length < current_length:
         previous_length = current_length
@@ -140,12 +148,11 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
     statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
 
     if statusbar_enabled:
-      separator = settings.get('breadcrumbs_separator', u' ')
       current_row = view.rowcol(view.sel()[0].b)[0]
       breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
       if breadcrumbs is not None and len(breadcrumbs) > 0:
-        view.set_status('breadcrumbs', separator.join(breadcrumbs))
+        view.set_status('breadcrumbs', get_separator(view).join(breadcrumbs))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
@@ -170,7 +177,6 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     '''
 
     settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-    separator = settings.get('breadcrumbs_separator', u' ')
     view = self.view
     current_row = view.rowcol(view.sel()[0].b)[0]
     breadcrumbs = make_breadcrumbs(view, current_row)
@@ -182,7 +188,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     else:
       breadcrumbs_element = '<em>None</em>'
 
-    breadcrumbs_string = separator.join(breadcrumbs)
+    breadcrumbs_string = get_separator(view).join(breadcrumbs)
     body = template.format(
         breadcrumbs=breadcrumbs_element,
         stylesheet=stylesheet
@@ -277,8 +283,6 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
       </body>
     '''
 
-    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-    separator = settings.get('breadcrumbs_separator', u' › ')
     phantoms = []
 
     for region in self.view.sel():
@@ -290,7 +294,7 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         parity = (i % 2) + 1
         crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
 
-      breadcrumbs_string = separator.join(breadcrumbs)
+      breadcrumbs_string = get_separator(self.view).join(breadcrumbs)
       body = template.format(
           breadcrumbs=''.join(crumb_elements),
           stylesheet=stylesheet
