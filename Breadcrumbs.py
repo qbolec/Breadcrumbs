@@ -138,7 +138,7 @@ def copy(view, text):
   sublime.status_message('Breadcrumbs copied to clipboard')
 
 
-class BreadcrumbsCommand(sublime_plugin.EventListener):
+class BreadcrumbsEventListener(sublime_plugin.EventListener):
 
   def on_selection_modified(self, view):
     view.erase_status('breadcrumbs')
