@@ -32,31 +32,13 @@ We recommend using [Package Control](https://packagecontrol.io/):
 
 ## Settings
 
-You can edit Breadcrumbs.sublime-settings to specify the following values:
+The settings include values to limit the length of breadcrumbs and you can create your own regular expressions so it includes only what you need. Settings can be further customized [per syntax](https://www.sublimetext.com/docs/3/settings.html).
 
-| name | type | default value | meaning |
-|------|------|---------|---------|
-|"breadcrumb_length_limit" | Number | 100 | Trim each breadcrumb to this many characters |
-| "total_breadcrumbs_length_limit" | Number | 200 | Limit the total length of the breadcrumbs, by trimming the longest breadcrumbs first |
-| "breadcrumbs_separator" | String | " › " | Separate breadcrumbs using this string |
-| "show_breadcrumbs_in_statusbar" | Boolean | true | Optionally hide the breadcrumbs from the statusbar |
+Open Preferences > Package Settings > Breadcrumbs > Settings to view all options. 
 
-The `"show_breadcrumbs_in_statusbar"` setting can also be changed [per syntax](https://www.sublimetext.com/docs/3/settings.html), you can also turn it off globally and enable it only for specific languages (or projects even).
+### Example key bindings
 
-### Tuning the breadcrumbs with regular expressions
-
-This packages comes with a very basic regex (`"^\\s*(?P<name>.*\\S)"`) to clean up each breadcrumb. Only the part that matches the "name" group is used.
-
-You can create [Syntax Specific settings](https://www.sublimetext.com/docs/3/settings.html) to fine-tune it for each language you use. Some examples:
-
-- For Python  
-`"breadcrumb_regex": "(?i)^\\s*(def|class)\\s*(?P<name>[a-z0-9-_ ]+)\\b"`
-- For JSON  
-`"breadcrumb_regex": "^\\s*\"(?P<name>[^\"]+)\".*"`
-
-### Example keybindings
-
-This package doesn't provide keybindings for its commands, allowing you to customise them as you see fit. Here are some examples:
+This package doesn't provide key bindings for its commands, allowing you to customize them as you see fit. Here are some examples:
 
 ```json
 { "keys": ["super+ctrl+b"], "command": "breadcrumbs_popup" },
