@@ -158,6 +158,12 @@ class BreadcrumbsEventListener(sublime_plugin.EventListener):
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
   def run(self, edit):
+
+    '''
+    Built to look and work like the ShowScopeName command's popup
+    See show_scope_name.py in the Default package
+    '''
+
     stylesheet = '''
       p {
         margin-top: 0;
