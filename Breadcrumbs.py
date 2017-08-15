@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
+import sublime
+import sublime_plugin
 
 if int(sublime.version()) > 3124:
   import html
-
-import sublime
-import sublime_plugin
 
 try:
   xrange
@@ -181,7 +180,6 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
       </body>
     '''
 
-    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
     view = self.view
     current_row = view.rowcol(view.sel()[0].b)[0]
     breadcrumbs = make_breadcrumbs(view, current_row)
@@ -202,8 +200,8 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
         body,
         max_width=512,
         on_navigate=lambda x: [
-          copy(view, breadcrumbs_string),
-          view.hide_popup()
+            copy(view, breadcrumbs_string),
+            view.hide_popup()
         ]
     )
 
