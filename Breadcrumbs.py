@@ -165,9 +165,7 @@ class BreadcrumbsEventListener(sublime_plugin.ViewEventListener):
   def on_selection_modified(self):
     current_row = self.view.rowcol(self.view.sel()[0].b)[0]
     breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
-
-    if len(breadcrumbs) > 0:
-      self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
+    self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
