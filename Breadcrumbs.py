@@ -241,9 +241,13 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
         div.phantom {
           margin: 0;
         }
+        i,
         .crumb {
           line-height: 2em;
           padding-right: 6px;
+        }
+        i {
+          padding-left: 6px;
         }
         .separator {
           border: 1em solid;
@@ -252,8 +256,9 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
           font-size: inherit;
           line-height: 0px;
         }
-        .crumb-1,
-        .separator-1 {
+        i,
+        .crumb,
+        .separator {
           background-color: var(--base-bg);
         }
         .crumb-2,
@@ -296,13 +301,18 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
       crumb_elements = []
       breadcrumbs = make_breadcrumbs(self.view, row)
-      for i, crumb in enumerate(breadcrumbs):
-        parity = (i % 2) + 1
-        crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
-
       breadcrumbs_string = get_separator(self.view).join(breadcrumbs)
+
+      if len(breadcrumbs) > 0:
+        for i, crumb in enumerate(breadcrumbs):
+          parity = (i % 2) + 1
+          crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
+        breadcrumbs_element = ''.join(crumb_elements)
+      else:
+        breadcrumbs_element = '<i>None</i>'
+
       body = template.format(
-          breadcrumbs=''.join(crumb_elements),
+          breadcrumbs=breadcrumbs_element,
           stylesheet=stylesheet
       )
       phantom = sublime.Phantom(
