@@ -140,21 +140,34 @@ def copy(view, text):
   sublime.status_message('Breadcrumbs copied to clipboard')
 
 
-class BreadcrumbsEventListener(sublime_plugin.EventListener):
+class BreadcrumbsEventListener(sublime_plugin.ViewEventListener):
 
-  def on_selection_modified(self, view):
-    view.erase_status('breadcrumbs')
+  @classmethod
+  def is_applicable(cls, settings):
+    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+    default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
+    enabled = settings.get('show_breadcrumbs_in_statusbar', default_enabled)
+    return enabled
 
-    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-    default_statusbar_enabled = settings.get('show_breadcrumbs_in_statusbar', True)
-    statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
+  def __init__(self, view):
+    self.view = view
+    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
 
-    if statusbar_enabled:
-      current_row = view.rowcol(view.sel()[0].b)[0]
-      breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
+    def clear():
+      default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
+      enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_enabled)
+      if enabled is not True:
+        view.erase_status('breadcrumbs')
 
-      if len(breadcrumbs) > 0:
-        view.set_status('breadcrumbs', get_separator(view).join(breadcrumbs))
+    defaults.add_on_change('show_breadcrumbs_in_statusbar', clear)
+    view.settings().add_on_change('show_breadcrumbs_in_statusbar', clear)
+
+  def on_selection_modified(self):
+    current_row = self.view.rowcol(self.view.sel()[0].b)[0]
+    breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
+
+    if len(breadcrumbs) > 0:
+      self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
 
 
 class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
