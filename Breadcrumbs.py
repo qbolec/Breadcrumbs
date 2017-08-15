@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
-import html
+
+if int(sublime.version()) > 3124:
+  import html
 
 import sublime
 import sublime_plugin
@@ -48,18 +50,18 @@ def get_separator(view):
   return separator
 
 
-def get_breadcrumb(view, points, regex, limit):
-  linestring = view.substr(sublime.Region(min(points), min(view.line(min(points)).b, min(points) + limit)))
+def get_breadcrumb(view, line_start, line_end, regex, limit):
+  linestring = view.substr(sublime.Region(line_start, min(line_end, line_start + 1024)))
   match = re.search(regex, linestring)
   if match:
-    return(match.group('name'))
+    return match.group('name')[0:limit]
   else:
     return None
 
 
 def make_breadcrumbs(view, current_row, shorten=False):
   if len(view.sel()) == 0:
-    return
+    return []
 
   settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
@@ -80,7 +82,7 @@ def make_breadcrumbs(view, current_row, shorten=False):
       current_row -= 1
 
     if current_row < 0:
-      return
+      return []
 
     indentation = get_row_indentation(get_row_start(current_row), view, tab_size) + 1
   else:
@@ -91,25 +93,24 @@ def make_breadcrumbs(view, current_row, shorten=False):
   last_line_start = view.text_point(current_row + 1, 0)
   while 0 <= current_row and 0 < indentation:
     line_start = get_row_start(current_row)
-    points = xrange(line_start, last_line_start)
+    line_end = last_line_start
     last_line_start = line_start
     current_indentation = get_row_indentation(line_start, view, tab_size, indentation)
-    if current_indentation < indentation and not is_white_row(view, points):
+    if current_indentation < indentation and not is_white_row(view, xrange(line_start, line_end)):
       indentation = current_indentation
-      this_breadcrumb = get_breadcrumb(view, points, breadcrumb_regex, breadcrumb_length_limit)
+      this_breadcrumb = get_breadcrumb(view, line_start, line_end, breadcrumb_regex, breadcrumb_length_limit)
       if this_breadcrumb is not None:
         breadcrumbs.append(this_breadcrumb)
 
     current_row -= 1
 
   breadcrumbs.reverse()
-
   if shorten:
     total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
     lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
     sorted_lengths = sorted(lengths)
     previous_length = 0
-    number_of_characters_left = total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view))
+    number_of_characters_left = max(0, total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view)))
     for (number_of_shorter, current_length) in enumerate(sorted_lengths):
       if previous_length < current_length:
         previous_length = current_length
@@ -134,7 +135,6 @@ def make_breadcrumbs(view, current_row, shorten=False):
 
 def copy(view, text):
   sublime.set_clipboard(text)
-  view.hide_popup()
   sublime.status_message('Breadcrumbs copied to clipboard')
 
 
@@ -151,7 +151,7 @@ class BreadcrumbsEventListener(sublime_plugin.EventListener):
       current_row = view.rowcol(view.sel()[0].b)[0]
       breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
-      if breadcrumbs is not None and len(breadcrumbs) > 0:
+      if len(breadcrumbs) > 0:
         view.set_status('breadcrumbs', get_separator(view).join(breadcrumbs))
 
 
@@ -169,7 +169,6 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
         margin-top: 0;
       }
       a {
-        font-family: system;
         font-size: 1.05rem;
       }
     '''
@@ -202,7 +201,10 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     view.show_popup(
         body,
         max_width=512,
-        on_navigate=lambda x: copy(view, breadcrumbs_string)
+        on_navigate=lambda x: [
+          copy(view, breadcrumbs_string),
+          view.hide_popup()
+        ]
     )
 
   def is_visible(self):
