@@ -3,8 +3,11 @@ import re
 import sublime
 import sublime_plugin
 
+minihtml_available = False
+
 if int(sublime.version()) > 3124:
   import html
+  minihtml_available = True
 
 try:
   xrange
@@ -206,7 +209,7 @@ class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
     )
 
   def is_visible(self):
-    return int(sublime.version()) > 3124
+    return minihtml_available
 
 
 class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
@@ -327,4 +330,4 @@ class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
     self.phantoms_visible = True
 
   def is_visible(self):
-    return int(sublime.version()) > 3124
+    return minihtml_available
