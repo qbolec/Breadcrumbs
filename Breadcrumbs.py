@@ -48,10 +48,15 @@ def is_white_row(view, points):
 
 
 def get_separator(view):
-  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-  default_separator = settings.get('breadcrumbs_separator', u' ')
-  separator = view.settings().get('breadcrumbs_separator', default_separator)
-  return separator
+  defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+  default_separator = defaults.get('breadcrumbs_separator', u' ')
+  return view.settings().get('breadcrumbs_separator', default_separator)
+
+
+def get_statusbar_enabled(settings):
+  defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+  default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
+  return settings.get('show_breadcrumbs_in_statusbar', default_enabled)
 
 
 def get_breadcrumb(view, line_start, line_end, regex, limit):
@@ -146,11 +151,7 @@ if viewevents_available is not True:
   class BreadcrumbsEventListenerST2(sublime_plugin.EventListener):
 
     def on_selection_modified(self, view):
-      settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-      default_statusbar_enabled = settings.get('show_breadcrumbs_in_statusbar', True)
-      statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
-
-      if statusbar_enabled:
+      if get_statusbar_enabled(view.settings()):
         current_row = view.rowcol(view.sel()[0].b)[0]
         breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
@@ -164,21 +165,16 @@ class BreadcrumbsEventListenerST3(sublime_plugin.ViewEventListener):
 
   @classmethod
   def is_applicable(cls, settings):
-    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
-    default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
-    enabled = settings.get('show_breadcrumbs_in_statusbar', default_enabled)
-    return enabled and viewevents_available
+    return get_statusbar_enabled(settings) and viewevents_available
 
   def __init__(self, view):
     self.view = view
-    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
 
     def clear():
-      default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
-      enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_enabled)
-      if enabled is not True:
+      if get_statusbar_enabled(view.settings()) is not True:
         view.erase_status('breadcrumbs')
 
+    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
     defaults.add_on_change('show_breadcrumbs_in_statusbar', clear)
     view.settings().add_on_change('show_breadcrumbs_in_statusbar', clear)
 
