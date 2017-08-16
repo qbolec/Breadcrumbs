@@ -4,10 +4,12 @@ import sublime
 import sublime_plugin
 
 minihtml_available = False
+viewevents_available = False
 
 if int(sublime.version()) > 3124:
   import html
   minihtml_available = True
+  viewevents_available = True
 
 try:
   xrange
@@ -140,14 +142,32 @@ def copy(view, text):
   sublime.status_message('Breadcrumbs copied to clipboard')
 
 
-class BreadcrumbsEventListener(sublime_plugin.ViewEventListener):
+if viewevents_available is not True:
+  class BreadcrumbsEventListenerST2(sublime_plugin.EventListener):
+
+    def on_selection_modified(self, view):
+      settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+      default_statusbar_enabled = settings.get('show_breadcrumbs_in_statusbar', True)
+      statusbar_enabled = view.settings().get('show_breadcrumbs_in_statusbar', default_statusbar_enabled)
+
+      if statusbar_enabled:
+        current_row = view.rowcol(view.sel()[0].b)[0]
+        breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
+
+        if len(breadcrumbs) > 0:
+          view.set_status('breadcrumbs', get_separator(view).join(breadcrumbs))
+      else:
+        view.erase_status('breadcrumbs')
+
+
+class BreadcrumbsEventListenerST3(sublime_plugin.ViewEventListener):
 
   @classmethod
   def is_applicable(cls, settings):
     defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
     default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
     enabled = settings.get('show_breadcrumbs_in_statusbar', default_enabled)
-    return enabled
+    return enabled and viewevents_available
 
   def __init__(self, view):
     self.view = view
