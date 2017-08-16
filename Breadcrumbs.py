@@ -3,13 +3,15 @@ import re
 import sublime
 import sublime_plugin
 
-minihtml_available = False
-viewevents_available = False
 
 if int(sublime.version()) > 3124:
   import html
   minihtml_available = True
   viewevents_available = True
+else:
+  minihtml_available = False
+  viewevents_available = False
+
 
 try:
   xrange
