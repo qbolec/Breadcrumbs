@@ -166,7 +166,7 @@ else:
       self.view = view
 
       def clear():
-        if get_statusbar_enabled(view.settings()) is not True:
+        if not get_statusbar_enabled(view.settings()):
           view.erase_status('breadcrumbs')
 
       defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
