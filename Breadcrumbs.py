@@ -4,15 +4,6 @@ import sublime
 import sublime_plugin
 
 
-if int(sublime.version()) > 3124:
-  import html
-  minihtml_available = True
-  viewevents_available = True
-else:
-  minihtml_available = False
-  viewevents_available = False
-
-
 try:
   xrange
 except NameError:
@@ -149,7 +140,7 @@ def copy(view, text):
   sublime.status_message('Breadcrumbs copied to clipboard')
 
 
-if viewevents_available is not True:
+if int(sublime.version()) < 3124:
   class BreadcrumbsEventListenerST2(sublime_plugin.EventListener):
 
     def on_selection_modified(self, view):
@@ -162,202 +153,196 @@ if viewevents_available is not True:
       else:
         view.erase_status('breadcrumbs')
 
+else:
+  import html
 
-class BreadcrumbsEventListenerST3(sublime_plugin.ViewEventListener):
+  class BreadcrumbsEventListenerST3(sublime_plugin.ViewEventListener):
 
-  @classmethod
-  def is_applicable(cls, settings):
-    return get_statusbar_enabled(settings) and viewevents_available
+    @classmethod
+    def is_applicable(cls, settings):
+      return get_statusbar_enabled(settings) and viewevents_available
 
-  def __init__(self, view):
-    self.view = view
+    def __init__(self, view):
+      self.view = view
 
-    def clear():
-      if get_statusbar_enabled(view.settings()) is not True:
-        view.erase_status('breadcrumbs')
+      def clear():
+        if get_statusbar_enabled(view.settings()) is not True:
+          view.erase_status('breadcrumbs')
 
-    defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
-    defaults.add_on_change('show_breadcrumbs_in_statusbar', clear)
-    view.settings().add_on_change('show_breadcrumbs_in_statusbar', clear)
+      defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+      defaults.add_on_change('show_breadcrumbs_in_statusbar', clear)
+      view.settings().add_on_change('show_breadcrumbs_in_statusbar', clear)
 
-  def on_selection_modified(self):
-    current_row = self.view.rowcol(self.view.sel()[0].b)[0]
-    breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
-    self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
+    def on_selection_modified(self):
+      current_row = self.view.rowcol(self.view.sel()[0].b)[0]
+      breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
+      self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
 
+  class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
-class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
 
-  def run(self, edit):
+      '''
+      Built to look and work like the ShowScopeName command's popup
+      See show_scope_name.py in the Default package
+      '''
 
-    '''
-    Built to look and work like the ShowScopeName command's popup
-    See show_scope_name.py in the Default package
-    '''
-
-    stylesheet = '''
-      p {
-        margin-top: 0;
-      }
-      a {
-        font-size: 1.05rem;
-      }
-    '''
-
-    template = '''
-      <body id=show-scope>
-          <style>{stylesheet}</style>
-          <p>{breadcrumbs}</p>
-          <a href="copy">Copy</a>
-      </body>
-    '''
-
-    view = self.view
-    current_row = view.rowcol(view.sel()[0].b)[0]
-    breadcrumbs = make_breadcrumbs(view, current_row)
-    escaped_crumbs = []
-    if len(breadcrumbs) > 0:
-      for crumb in breadcrumbs:
-        escaped_crumbs.append(html.escape(crumb, quote=False))
-      breadcrumbs_element = '<br>'.join(escaped_crumbs)
-    else:
-      breadcrumbs_element = '<em>None</em>'
-
-    breadcrumbs_string = get_separator(view).join(breadcrumbs)
-    body = template.format(
-        breadcrumbs=breadcrumbs_element,
-        stylesheet=stylesheet
-    )
-    view.show_popup(
-        body,
-        max_width=512,
-        on_navigate=lambda x: [
-            copy(view, breadcrumbs_string),
-            view.hide_popup()
-        ]
-    )
-
-  def is_visible(self):
-    return minihtml_available
-
-
-class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
-
-  def __init__(self, view):
-    self.phantoms_visible = False
-    self.view = view
-    self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
-
-  def close(self):
-    self.view.erase_phantoms('breadcrumbs')
-    self.phantoms_visible = False
-
-  def navigate(self, href, string):
-    if href == 'close':
-      self.close()
-    else:
-      copy(self.view, string)
-
-  def run(self, edit):
-    if self.phantoms_visible:
-      self.close()
-      return
-
-    stylesheet = '''
-      <style>
-        html {
-          --base-bg: color(var(--bluish) blend(var(--background) 30%));
-          --accent-bg: color(var(--base-bg) blend(var(--foreground) 90%));
-          line-height: 20px;
+      stylesheet = '''
+        p {
+          margin-top: 0;
         }
-        div.phantom {
-          margin: 0;
+        a {
+          font-size: 1.05rem;
         }
-        i,
-        .crumb {
-          line-height: 2em;
-          padding-right: 6px;
-        }
-        i {
-          padding-left: 6px;
-        }
-        .separator {
-          border: 1em solid;
-          width: 0;
-          height: 0;
-          font-size: inherit;
-          line-height: 0px;
-        }
-        i,
-        .crumb,
-        .separator {
-          background-color: var(--base-bg);
-        }
-        .crumb-2,
-        .separator-2 {
-          background-color: var(--accent-bg);
-        }
-        .separator-1 {
-          border-color: var(--base-bg);
-          border-left-color: var(--accent-bg);
-        }
-        .separator-2 {
-          border-color: var(--accent-bg);
-          border-left-color: var(--base-bg);
-        }
-        div.phantom a {
-          text-decoration: inherit;
-          vertical-align: middle;
-          line-height: 2em;
-          padding: 0 7px 0 12px;
-          background-color: var(--base-bg);
-        }
-        div.phantom a.close {
-          font-weight: bold;
-          padding-left: 4px;
-        }
-      </style>
-    '''
+      '''
 
-    template = '''
-      <body id="inline-breadcrumbs">
-        {stylesheet}
-        <div class="phantom">{breadcrumbs}<a href="copy">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
-      </body>
-    '''
+      template = '''
+        <body id=show-scope>
+            <style>{stylesheet}</style>
+            <p>{breadcrumbs}</p>
+            <a href="copy">Copy</a>
+        </body>
+      '''
 
-    phantoms = []
-
-    for region in self.view.sel():
-      (row, col) = self.view.rowcol(region.begin())
-
-      crumb_elements = []
-      breadcrumbs = make_breadcrumbs(self.view, row)
-      breadcrumbs_string = get_separator(self.view).join(breadcrumbs)
-
+      view = self.view
+      current_row = view.rowcol(view.sel()[0].b)[0]
+      breadcrumbs = make_breadcrumbs(view, current_row)
+      escaped_crumbs = []
       if len(breadcrumbs) > 0:
-        for i, crumb in enumerate(breadcrumbs):
-          parity = (i % 2) + 1
-          crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
-        breadcrumbs_element = ''.join(crumb_elements)
+        for crumb in breadcrumbs:
+          escaped_crumbs.append(html.escape(crumb, quote=False))
+        breadcrumbs_element = '<br>'.join(escaped_crumbs)
       else:
-        breadcrumbs_element = '<i>None</i>'
+        breadcrumbs_element = '<em>None</em>'
 
+      breadcrumbs_string = get_separator(view).join(breadcrumbs)
       body = template.format(
           breadcrumbs=breadcrumbs_element,
           stylesheet=stylesheet
       )
-      phantom = sublime.Phantom(
-          region,
+      view.show_popup(
           body,
-          sublime.LAYOUT_BLOCK,
-          on_navigate=lambda href,
-          string=breadcrumbs_string: self.navigate(href, breadcrumbs_string)
+          max_width=512,
+          on_navigate=lambda x: [
+              copy(view, breadcrumbs_string),
+              view.hide_popup()
+          ]
       )
-      phantoms.append(phantom)
 
-    self.phantom_set.update(phantoms)
-    self.phantoms_visible = True
+  class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
 
-  def is_visible(self):
-    return minihtml_available
+    def __init__(self, view):
+      self.phantoms_visible = False
+      self.view = view
+      self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
+
+    def close(self):
+      self.view.erase_phantoms('breadcrumbs')
+      self.phantoms_visible = False
+
+    def navigate(self, href, string):
+      if href == 'close':
+        self.close()
+      else:
+        copy(self.view, string)
+
+    def run(self, edit):
+      if self.phantoms_visible:
+        self.close()
+        return
+
+      stylesheet = '''
+        <style>
+          html {
+            --base-bg: color(var(--bluish) blend(var(--background) 30%));
+            --accent-bg: color(var(--base-bg) blend(var(--foreground) 90%));
+            line-height: 20px;
+          }
+          div.phantom {
+            margin: 0;
+          }
+          i,
+          .crumb {
+            line-height: 2em;
+            padding-right: 6px;
+          }
+          i {
+            padding-left: 6px;
+          }
+          .separator {
+            border: 1em solid;
+            width: 0;
+            height: 0;
+            font-size: inherit;
+            line-height: 0px;
+          }
+          i,
+          .crumb,
+          .separator {
+            background-color: var(--base-bg);
+          }
+          .crumb-2,
+          .separator-2 {
+            background-color: var(--accent-bg);
+          }
+          .separator-1 {
+            border-color: var(--base-bg);
+            border-left-color: var(--accent-bg);
+          }
+          .separator-2 {
+            border-color: var(--accent-bg);
+            border-left-color: var(--base-bg);
+          }
+          div.phantom a {
+            text-decoration: inherit;
+            vertical-align: middle;
+            line-height: 2em;
+            padding: 0 7px 0 12px;
+            background-color: var(--base-bg);
+          }
+          div.phantom a.close {
+            font-weight: bold;
+            padding-left: 4px;
+          }
+        </style>
+      '''
+
+      template = '''
+        <body id="inline-breadcrumbs">
+          {stylesheet}
+          <div class="phantom">{breadcrumbs}<a href="copy">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        </body>
+      '''
+
+      phantoms = []
+
+      for region in self.view.sel():
+        (row, col) = self.view.rowcol(region.begin())
+
+        crumb_elements = []
+        breadcrumbs = make_breadcrumbs(self.view, row)
+        breadcrumbs_string = get_separator(self.view).join(breadcrumbs)
+
+        if len(breadcrumbs) > 0:
+          for i, crumb in enumerate(breadcrumbs):
+            parity = (i % 2) + 1
+            crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
+          breadcrumbs_element = ''.join(crumb_elements)
+        else:
+          breadcrumbs_element = '<i>None</i>'
+
+        body = template.format(
+            breadcrumbs=breadcrumbs_element,
+            stylesheet=stylesheet
+        )
+        phantom = sublime.Phantom(
+            region,
+            body,
+            sublime.LAYOUT_BLOCK,
+            on_navigate=lambda href,
+            string=breadcrumbs_string: self.navigate(href, breadcrumbs_string)
+        )
+        phantoms.append(phantom)
+
+      self.phantom_set.update(phantoms)
+      self.phantoms_visible = True
