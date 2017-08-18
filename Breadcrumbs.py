@@ -40,16 +40,21 @@ def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
 
-def get_separator(view):
+def get_setting(view_settings, key, default_value):
   defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
-  default_separator = defaults.get('breadcrumbs_separator', u' ')
-  return view.settings().get('breadcrumbs_separator', default_separator)
+  return view_settings.get(key, defaults.get(key, default_value))
 
 
-def get_statusbar_enabled(settings):
-  defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
-  default_enabled = defaults.get('show_breadcrumbs_in_statusbar', True)
-  return settings.get('show_breadcrumbs_in_statusbar', default_enabled)
+def get_separator(view_settings):
+  return get_setting(view_settings, 'breadcrumbs_separator', u' ')
+
+
+def get_statusbar_enabled(view_settings):
+  return get_setting(view_settings, 'show_breadcrumbs_in_statusbar', True)
+
+
+def get_regex(view_settings):
+  return get_setting(view_settings, 'breadcrumb_regex', u'(?P<name>.*)')
 
 
 def get_breadcrumb(view, line_start, line_end, regex, limit):
@@ -65,12 +70,8 @@ def make_breadcrumbs(view, current_row, shorten=False):
   if len(view.sel()) == 0:
     return []
 
-  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   tab_size = get_tab_size(view)
-
-  default_breadcrumb_regex = settings.get('breadcrumb_regex', u'(?P<name>.*)')
-  breadcrumb_regex = view.settings().get('breadcrumb_regex', default_breadcrumb_regex)
-
+  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
   breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
 
   def get_row_start(row):
@@ -100,7 +101,7 @@ def make_breadcrumbs(view, current_row, shorten=False):
     current_indentation = get_row_indentation(line_start, view, tab_size, indentation)
     if current_indentation < indentation and not is_white_row(view, xrange(line_start, line_end)):
       indentation = current_indentation
-      this_breadcrumb = get_breadcrumb(view, line_start, line_end, breadcrumb_regex, breadcrumb_length_limit)
+      this_breadcrumb = get_breadcrumb(view, line_start, line_end, get_regex(view.settings()), breadcrumb_length_limit)
       if this_breadcrumb is not None:
         breadcrumbs.append(this_breadcrumb)
 
@@ -112,7 +113,7 @@ def make_breadcrumbs(view, current_row, shorten=False):
     lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
     sorted_lengths = sorted(lengths)
     previous_length = 0
-    number_of_characters_left = max(0, total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view)))
+    number_of_characters_left = max(0, total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view.settings())))
     for (number_of_shorter, current_length) in enumerate(sorted_lengths):
       if previous_length < current_length:
         previous_length = current_length
@@ -149,7 +150,7 @@ if int(sublime.version()) < 3124:
         breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
 
         if len(breadcrumbs) > 0:
-          view.set_status('breadcrumbs', get_separator(view).join(breadcrumbs))
+          view.set_status('breadcrumbs', get_separator(view.settings()).join(breadcrumbs))
       else:
         view.erase_status('breadcrumbs')
 
@@ -176,7 +177,7 @@ else:
     def on_selection_modified(self):
       current_row = self.view.rowcol(self.view.sel()[0].b)[0]
       breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
-      self.view.set_status('breadcrumbs', get_separator(self.view).join(breadcrumbs))
+      self.view.set_status('breadcrumbs', get_separator(self.view.settings()).join(breadcrumbs))
 
   class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
 
@@ -215,7 +216,7 @@ else:
       else:
         breadcrumbs_element = '<em>None</em>'
 
-      breadcrumbs_string = get_separator(view).join(breadcrumbs)
+      breadcrumbs_string = get_separator(view.settings()).join(breadcrumbs)
       body = template.format(
           breadcrumbs=breadcrumbs_element,
           stylesheet=stylesheet
@@ -321,7 +322,7 @@ else:
 
         crumb_elements = []
         breadcrumbs = make_breadcrumbs(self.view, row)
-        breadcrumbs_string = get_separator(self.view).join(breadcrumbs)
+        breadcrumbs_string = get_separator(self.view.settings()).join(breadcrumbs)
 
         if len(breadcrumbs) > 0:
           for i, crumb in enumerate(breadcrumbs):
