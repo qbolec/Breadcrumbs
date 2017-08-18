@@ -160,7 +160,7 @@ else:
 
     @classmethod
     def is_applicable(cls, settings):
-      return get_statusbar_enabled(settings) and viewevents_available
+      return get_statusbar_enabled(settings)
 
     def __init__(self, view):
       self.view = view
