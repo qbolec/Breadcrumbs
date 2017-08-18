@@ -240,11 +240,11 @@ else:
       self.view.erase_phantoms('breadcrumbs')
       self.phantoms_visible = False
 
-    def navigate(self, href, string):
+    def navigate(self, href, breadcrumbs_string):
       if href == 'close':
         self.close()
       else:
-        copy(self.view, string)
+        copy(self.view, breadcrumbs_string)
 
     def run(self, edit):
       if self.phantoms_visible:
@@ -339,8 +339,8 @@ else:
             region,
             body,
             sublime.LAYOUT_BLOCK,
-            on_navigate=lambda href,
-            string=breadcrumbs_string: self.navigate(href, breadcrumbs_string)
+            on_navigate=lambda href, breadcrumbs_string=breadcrumbs_string:
+                self.navigate(href, breadcrumbs_string)
         )
         phantoms.append(phantom)
 
