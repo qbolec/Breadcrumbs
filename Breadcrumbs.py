@@ -1,94 +1,119 @@
 # -*- coding: utf-8 -*-
-import sublime, sublime_plugin
-import math
+import re
+import sublime
+import sublime_plugin
+
 
 try:
   xrange
 except NameError:
   xrange = range
 
+
 def get_tab_size(view):
   return int(view.settings().get('tab_size', 8))
 
-def get_row_indentation(points, view, tab_size, limit=1e20):
-  pos = 0
-  for pt in points:
-    ch = view.substr(pt)
 
+def get_row_indentation(line_start, view, tab_size, indentation_limit=None):
+  if indentation_limit is None:
+    row = view.rowcol(line_start)[0]
+    indentation_limit = view.text_point(row + 1, 0) - line_start
+
+  pos = 0
+  for ch in view.substr(sublime.Region(line_start, line_start + indentation_limit)):
     if ch == '\t':
       pos += tab_size - (pos % tab_size)
 
-    elif ch.isspace():
+    elif ch == ' ':
       pos += 1
 
     else:
       break
 
-    if limit <= pos:
+    if indentation_limit <= pos:
       break
 
   return pos
 
+
 def is_white_row(view, points):
   return all(view.substr(pt).isspace() for pt in reversed(points))
 
-def get_breadcrumb(view, points, limit):
-  for pt in points:
-    ch = view.substr(pt)
-    if not ch.isspace():
-      return view.substr(sublime.Region(pt, min(view.line(pt).b, pt + limit))).strip()
-  return ''
 
-class BreadcrumbsCommand(sublime_plugin.EventListener):
-  def on_selection_modified(self, view):
-    tab_size = get_tab_size(view)
-    settings = sublime.load_settings('Breadcrumbs.sublime-settings')
-    breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
-    separator = settings.get('breadcrumbs_separator', u' ■ ')
+def get_setting(view_settings, key, default_value):
+  defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+  return view_settings.get(key, defaults.get(key, default_value))
+
+
+def get_separator(view_settings):
+  return get_setting(view_settings, 'breadcrumbs_separator', u' ')
+
+
+def get_statusbar_enabled(view_settings):
+  return get_setting(view_settings, 'show_breadcrumbs_in_statusbar', True)
+
+
+def get_regex(view_settings):
+  return get_setting(view_settings, 'breadcrumb_regex', u'(?P<name>.*)')
+
+
+def get_breadcrumb(view, line_start, line_end, regex, limit):
+  linestring = view.substr(sublime.Region(line_start, min(line_end, line_start + 1024)))
+  match = re.search(regex, linestring)
+  if match:
+    return match.group('name')[0:limit]
+  else:
+    return None
+
+
+def make_breadcrumbs(view, current_row, shorten=False):
+  if len(view.sel()) == 0:
+    return []
+
+  tab_size = get_tab_size(view)
+  settings = sublime.load_settings('Breadcrumbs.sublime-settings')
+  breadcrumb_length_limit = settings.get('breadcrumb_length_limit', 100)
+
+  def get_row_start(row):
+    return view.text_point(row, 0)
+
+  def get_points_by_row(row):
+    return xrange(get_row_start(row), get_row_start(row + 1))
+
+  if is_white_row(view, get_points_by_row(current_row)):
+    while 0 <= current_row and is_white_row(view, get_points_by_row(current_row)):
+      current_row -= 1
+
+    if current_row < 0:
+      return []
+
+    indentation = get_row_indentation(get_row_start(current_row), view, tab_size) + 1
+  else:
+    indentation = get_row_indentation(get_row_start(current_row), view, tab_size)
+    current_row -= 1
+
+  breadcrumbs = []
+  last_line_start = view.text_point(current_row + 1, 0)
+  while 0 <= current_row and 0 < indentation:
+    line_start = get_row_start(current_row)
+    line_end = last_line_start
+    last_line_start = line_start
+    current_indentation = get_row_indentation(line_start, view, tab_size, indentation)
+    if current_indentation < indentation and not is_white_row(view, xrange(line_start, line_end)):
+      indentation = current_indentation
+      this_breadcrumb = get_breadcrumb(view, line_start, line_end, get_regex(view.settings()), breadcrumb_length_limit)
+      if this_breadcrumb is not None:
+        breadcrumbs.append(this_breadcrumb)
+
+    current_row -= 1
+
+  breadcrumbs.reverse()
+  if shorten:
     total_breadcrumbs_length_limit = settings.get('total_breadcrumbs_length_limit', 200)
-    view.erase_status('breadcrumbs')
-
-    if len(view.sel()) == 0:
-      return
-
-    current_row = view.rowcol(view.sel()[0].b)[0]
-
-    def get_row_start(row):
-      return view.text_point(row,0)
-
-    def get_points_by_row(row):
-      return xrange(get_row_start(row), get_row_start(row + 1))
-
-    if is_white_row(view, get_points_by_row(current_row)):
-      while 0 <= current_row and is_white_row(view, get_points_by_row(current_row)):
-        current_row -= 1
-
-      if current_row < 0:
-        return
-
-      indentation = get_row_indentation(get_points_by_row(current_row), view, tab_size) + 1
-    else:
-      indentation = get_row_indentation(get_points_by_row(current_row), view, tab_size)
-      current_row -= 1
-
-    breadcrumbs = []
-    last_line_start = view.text_point(current_row + 1, 0)
-    while 0 <= current_row and 0 < indentation:
-      line_start = get_row_start(current_row)
-      points = xrange(line_start, last_line_start)
-      last_line_start = line_start
-      current_indentation = get_row_indentation(points, view, tab_size, indentation)
-      if current_indentation < indentation and not is_white_row(view, points):
-        indentation = current_indentation
-        breadcrumbs.append(get_breadcrumb(view, points, breadcrumb_length_limit))
-
-      current_row -= 1
-
-    breadcrumbs.reverse()
     lengths = [len(breadcrumb) for breadcrumb in breadcrumbs]
     sorted_lengths = sorted(lengths)
     previous_length = 0
-    number_of_characters_left  = total_breadcrumbs_length_limit - len(lengths) * len(separator)
+    number_of_characters_left = max(0, total_breadcrumbs_length_limit - len(lengths) * len(get_separator(view.settings())))
     for (number_of_shorter, current_length) in enumerate(sorted_lengths):
       if previous_length < current_length:
         previous_length = current_length
@@ -108,4 +133,217 @@ class BreadcrumbsCommand(sublime_plugin.EventListener):
               breadcrumbs[index_of_breadcrumb] = breadcrumbs[index_of_breadcrumb][0:length_of_trim]
           break
       number_of_characters_left -= current_length
-    view.set_status('breadcrumbs',separator.join(breadcrumbs+['']))
+  return breadcrumbs
+
+
+def copy(view, text):
+  sublime.set_clipboard(text)
+  sublime.status_message('Breadcrumbs copied to clipboard')
+
+
+if int(sublime.version()) < 3124:
+  class BreadcrumbsEventListenerST2(sublime_plugin.EventListener):
+
+    def on_selection_modified(self, view):
+      if get_statusbar_enabled(view.settings()):
+        current_row = view.rowcol(view.sel()[0].b)[0]
+        breadcrumbs = make_breadcrumbs(view, current_row, shorten=True)
+
+        if len(breadcrumbs) > 0:
+          view.set_status('breadcrumbs', get_separator(view.settings()).join(breadcrumbs))
+      else:
+        view.erase_status('breadcrumbs')
+
+else:
+  import html
+
+  class BreadcrumbsEventListenerST3(sublime_plugin.ViewEventListener):
+
+    @classmethod
+    def is_applicable(cls, settings):
+      return get_statusbar_enabled(settings)
+
+    def __init__(self, view):
+      self.view = view
+
+      def clear():
+        if not get_statusbar_enabled(view.settings()):
+          view.erase_status('breadcrumbs')
+
+      defaults = sublime.load_settings('Breadcrumbs.sublime-settings')
+      defaults.add_on_change('show_breadcrumbs_in_statusbar', clear)
+      view.settings().add_on_change('show_breadcrumbs_in_statusbar', clear)
+
+    def on_selection_modified(self):
+      current_row = self.view.rowcol(self.view.sel()[0].b)[0]
+      breadcrumbs = make_breadcrumbs(self.view, current_row, shorten=True)
+      self.view.set_status('breadcrumbs', get_separator(self.view.settings()).join(breadcrumbs))
+
+  class BreadcrumbsPopupCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit):
+
+      '''
+      Built to look and work like the ShowScopeName command's popup
+      See show_scope_name.py in the Default package
+      '''
+
+      stylesheet = '''
+        p {
+          margin-top: 0;
+        }
+        a {
+          font-size: 1.05rem;
+        }
+      '''
+
+      template = '''
+        <body id=show-scope>
+            <style>{stylesheet}</style>
+            <p>{breadcrumbs}</p>
+            <a href="copy">Copy</a>
+        </body>
+      '''
+
+      view = self.view
+      current_row = view.rowcol(view.sel()[0].b)[0]
+      breadcrumbs = make_breadcrumbs(view, current_row)
+      escaped_crumbs = []
+      if len(breadcrumbs) > 0:
+        for crumb in breadcrumbs:
+          escaped_crumbs.append(html.escape(crumb, quote=False))
+        breadcrumbs_element = '<br>'.join(escaped_crumbs)
+      else:
+        breadcrumbs_element = '<em>None</em>'
+
+      breadcrumbs_string = get_separator(view.settings()).join(breadcrumbs)
+      body = template.format(
+          breadcrumbs=breadcrumbs_element,
+          stylesheet=stylesheet
+      )
+      view.show_popup(
+          body,
+          max_width=512,
+          on_navigate=lambda x: [
+              copy(view, breadcrumbs_string),
+              view.hide_popup()
+          ]
+      )
+
+  class BreadcrumbsPhantomCommand(sublime_plugin.TextCommand):
+
+    def __init__(self, view):
+      self.phantoms_visible = False
+      self.view = view
+      self.phantom_set = sublime.PhantomSet(view, 'breadcrumbs')
+
+    def close(self):
+      self.view.erase_phantoms('breadcrumbs')
+      self.phantoms_visible = False
+
+    def navigate(self, href, breadcrumbs_string):
+      if href == 'close':
+        self.close()
+      else:
+        copy(self.view, breadcrumbs_string)
+
+    def run(self, edit):
+      if self.phantoms_visible:
+        self.close()
+        return
+
+      stylesheet = '''
+        <style>
+          html {
+            --base-bg: color(var(--bluish) blend(var(--background) 30%));
+            --accent-bg: color(var(--base-bg) blend(var(--foreground) 90%));
+            line-height: 20px;
+          }
+          div.phantom {
+            margin: 0;
+          }
+          i,
+          .crumb {
+            line-height: 2em;
+            padding-right: 6px;
+          }
+          i {
+            padding-left: 6px;
+          }
+          .separator {
+            border: 1em solid;
+            width: 0;
+            height: 0;
+            font-size: inherit;
+            line-height: 0px;
+          }
+          i,
+          .crumb,
+          .separator {
+            background-color: var(--base-bg);
+          }
+          .crumb-2,
+          .separator-2 {
+            background-color: var(--accent-bg);
+          }
+          .separator-1 {
+            border-color: var(--base-bg);
+            border-left-color: var(--accent-bg);
+          }
+          .separator-2 {
+            border-color: var(--accent-bg);
+            border-left-color: var(--base-bg);
+          }
+          div.phantom a {
+            text-decoration: inherit;
+            vertical-align: middle;
+            line-height: 2em;
+            padding: 0 7px 0 12px;
+            background-color: var(--base-bg);
+          }
+          div.phantom a.close {
+            font-weight: bold;
+            padding-left: 4px;
+          }
+        </style>
+      '''
+
+      template = '''
+        <body id="inline-breadcrumbs">
+          {stylesheet}
+          <div class="phantom">{breadcrumbs}<a href="copy">Copy</a><a class="close" href="close">''' + chr(0x00D7) + '''</a></div>
+        </body>
+      '''
+
+      phantoms = []
+
+      for region in self.view.sel():
+        (row, col) = self.view.rowcol(region.begin())
+
+        crumb_elements = []
+        breadcrumbs = make_breadcrumbs(self.view, row)
+        breadcrumbs_string = get_separator(self.view.settings()).join(breadcrumbs)
+
+        if len(breadcrumbs) > 0:
+          for i, crumb in enumerate(breadcrumbs):
+            parity = (i % 2) + 1
+            crumb_elements.append('<span class="separator separator-{parity}"> </span><span class="crumb crumb-{parity}">'.format(parity=parity) + html.escape(crumb, quote=False) + '</span>')
+          breadcrumbs_element = ''.join(crumb_elements)
+        else:
+          breadcrumbs_element = '<i>None</i>'
+
+        body = template.format(
+            breadcrumbs=breadcrumbs_element,
+            stylesheet=stylesheet
+        )
+        phantom = sublime.Phantom(
+            region,
+            body,
+            sublime.LAYOUT_BLOCK,
+            on_navigate=lambda href, breadcrumbs_string=breadcrumbs_string:
+                self.navigate(href, breadcrumbs_string)
+        )
+        phantoms.append(phantom)
+
+      self.phantom_set.update(phantoms)
+      self.phantoms_visible = True

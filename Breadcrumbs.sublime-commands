@@ -1,0 +1,10 @@
+[
+  {
+    "caption": "Show Breadcrumbs",
+    "command": "breadcrumbs_popup"
+  },
+  {
+    "caption": "Show Breadcrumbs Inline",
+    "command": "breadcrumbs_phantom"
+  }
+]

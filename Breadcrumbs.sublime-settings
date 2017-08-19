@@ -1,5 +1,32 @@
 {
-"breadcrumb_length_limit": 100,
-"total_breadcrumbs_length_limit": 200,
-"breadcrumbs_separator": " ■ "
+  // Strips the full line that is used as breadcrumb down to the "name" group.
+  // This regex is intended to provide a useful crumb in most languages,
+  // but you can change thihs for each language you use.
+  // Read about Syntax Specific settings here:
+  // https://www.sublimetext.com/docs/3/settings.html
+  //
+  // Some examples:
+  // Python: "(?i)^\\s*(def|class)\\s*(?P<name>[a-z0-9-_ ]+)\\b"
+  // JSON: "^\\s*\"(?P<name>[^\"]+)\".*"
+  // Note that your regex should include one (?P<name>) group,
+  // this group is the only part that is used to create a crumb.
+  "breadcrumb_regex": "^([{}\\(\\)\\[\\]\\s])*\\s*(?P<name>[^{\\(\\[]*[^:{\\(\\[\\s])",
+
+  // The seperator used in between breadcrumbs in the statusbar.
+  // Also used when you copy breadcrumbs from the popup or the phantoms.
+  // This can also be changed per syntax.
+  // Some suggestions: ○ ● » ∕ ˙ · ♥
+  "breadcrumbs_separator": " › ",
+
+  // Limit the length of each "crumb" to this many characters.
+  "breadcrumb_length_limit": 100,
+
+  // Choose if breadcrumbs will be shown in the statusbar.
+  // This can also be changed per syntax.
+  "show_breadcrumbs_in_statusbar": true,
+
+  // Limit the total length of the breadcrumbs to this many characters,
+  // by trimming the longest breadcrumbs first.
+  // Is only applied to the breadcrumbs visible in the statusbar.
+  "total_breadcrumbs_length_limit": 200
 }
